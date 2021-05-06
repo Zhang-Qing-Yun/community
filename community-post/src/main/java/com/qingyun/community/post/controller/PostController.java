@@ -1,8 +1,10 @@
 package com.qingyun.community.post.controller;
 
 
+import com.qingyun.community.post.feignClient.UserClient;
 import com.qingyun.community.post.pojo.Page;
 import com.qingyun.community.post.pojo.Post;
+import com.qingyun.community.post.pojo.User;
 import com.qingyun.community.post.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -31,6 +33,9 @@ public class PostController {
     @Autowired
     private PostService postService;
 
+    @Autowired
+    private UserClient userClient;
+
     @GetMapping("/index")
     public String getIndexPage(Model model, @RequestParam(required = false) Integer current) {
         //  当前页的全部帖子
@@ -54,7 +59,8 @@ public class PostController {
             for(Post post: items) {
                 Map<String, Object> map = new HashMap<>();
                 map.put("post", post);
-                //TODO: 需将user也放到map里
+                User user = userClient.getUserById(Integer.parseInt(post.getUserId()));
+                map.put("user", user);
                 posts.add(map);
             }
         }
@@ -62,6 +68,7 @@ public class PostController {
         model.addAttribute("page", page);
         return "/index";
     }
+
 
 }
 

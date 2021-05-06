@@ -23,7 +23,7 @@ public class CodeGenerator {
         // 2、全局配置
         GlobalConfig gc = new GlobalConfig();
         //  代码最终输出到哪
-        gc.setOutputDir("E:\\Mystudy\\My_Project\\Java_Project\\community\\community-post"
+        gc.setOutputDir("E:\\Mystudy\\My_Project\\Java_Project\\community\\community-user"
                 + "/src/main/java");
 
         gc.setAuthor("張青云");  // 作者
@@ -49,7 +49,7 @@ public class CodeGenerator {
         PackageConfig pc = new PackageConfig();
         //  com.qingYun
         pc.setParent("com.qingyun.community");  // 包名
-        pc.setModuleName("post"); // 包下的模块名
+        pc.setModuleName("user"); // 包下的模块名
         //  com.qingYun.community.post.controller
         pc.setController("controller");
         pc.setEntity("pojo");
@@ -59,7 +59,7 @@ public class CodeGenerator {
 
         // 5、生成代码的策略配置
         StrategyConfig strategy = new StrategyConfig();
-        strategy.setInclude("user");  // 根据哪个表来生成代码
+        strategy.setInclude("login_ticket");  // 根据哪个表来生成代码
         strategy.setNaming(NamingStrategy.underline_to_camel);  //数据库表映射到实体的命名策略
         strategy.setTablePrefix(pc.getModuleName() + "_");  //生成实体时去掉表前缀
 

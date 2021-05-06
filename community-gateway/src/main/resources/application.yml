@@ -1,0 +1,18 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: user_route
+          uri: lb://community-user
+          predicates:
+            - Path=/user/**
+
+        - id: post_route
+          uri: lb://community-post
+          predicates:
+            - Path=/community/post/**
+
+        - id: third_route
+          uri: lb://community-third
+          predicates:
+            - Path=/third/**
