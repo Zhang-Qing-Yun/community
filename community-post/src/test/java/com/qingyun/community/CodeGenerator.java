@@ -23,7 +23,7 @@ public class CodeGenerator {
         // 2、全局配置
         GlobalConfig gc = new GlobalConfig();
         //  代码最终输出到哪
-        gc.setOutputDir("E:\\Mystudy\\My_Project\\Java_Project\\community\\community-user"
+        gc.setOutputDir("E:\\Mystudy\\My_Project\\Java_Project\\community\\community-message"
                 + "/src/main/java");
 
         gc.setAuthor("張青云");  // 作者
@@ -38,7 +38,7 @@ public class CodeGenerator {
 
         // 3、数据源配置
         DataSourceConfig dsc = new DataSourceConfig();
-        dsc.setUrl("jdbc:mysql://8.140.166.139:3306/community?serverTimezone=GMT%2B8");
+        dsc.setUrl("jdbc:mysql://8.140.166.139:3306/community?serverTimezone=GMT%2B8&characterEncoding=utf8");
         dsc.setDriverName("com.mysql.cj.jdbc.Driver");
         dsc.setUsername("root");
         dsc.setPassword("A1146985270ZZQ");
@@ -49,7 +49,7 @@ public class CodeGenerator {
         PackageConfig pc = new PackageConfig();
         //  com.qingYun
         pc.setParent("com.qingyun.community");  // 包名
-        pc.setModuleName("user"); // 包下的模块名
+        pc.setModuleName("message"); // 包下的模块名
         //  com.qingYun.community.post.controller
         pc.setController("controller");
         pc.setEntity("pojo");
@@ -59,7 +59,7 @@ public class CodeGenerator {
 
         // 5、生成代码的策略配置
         StrategyConfig strategy = new StrategyConfig();
-        strategy.setInclude("login_ticket");  // 根据哪个表来生成代码
+        strategy.setInclude("message");  // 根据哪个表来生成代码
         strategy.setNaming(NamingStrategy.underline_to_camel);  //数据库表映射到实体的命名策略
         strategy.setTablePrefix(pc.getModuleName() + "_");  //生成实体时去掉表前缀
 

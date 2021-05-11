@@ -9,14 +9,14 @@ function send_letter() {
 	var toName = $("#recipient-name").val();
 	var content = $("#message-text").val();
 	$.post(
-	    CONTEXT_PATH + "/letter/send",
+	    "/message/sendLetter",
 	    {"toName":toName,"content":content},
 	    function(data) {
-	        data = $.parseJSON(data);
-	        if(data.code == 0) {
+	        // data = $.parseJSON(data);
+	        if(data.code == 20000) {
 	            $("#hintBody").text("发送成功!");
 	        } else {
-	            $("#hintBody").text(data.msg);
+	            $("#hintBody").text(data.message);
 	        }
 
 	        $("#hintModal").modal("show");

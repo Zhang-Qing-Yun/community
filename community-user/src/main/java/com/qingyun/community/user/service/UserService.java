@@ -23,6 +23,13 @@ public interface UserService extends IService<User> {
     User getUserById(Integer userId);
 
     /**
+     * 根据用户名查询用户（用户名是唯一的）
+     * @param username
+     * @return
+     */
+    User getUserByUsername(String username);
+
+    /**
      * 注册
      * @param user
      * @return

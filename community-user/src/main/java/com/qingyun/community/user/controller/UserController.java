@@ -2,7 +2,9 @@ package com.qingyun.community.user.controller;
 
 
 import com.google.code.kaptcha.Producer;
+import com.qingyun.community.base.annotation.LoginRequired;
 import com.qingyun.community.base.utils.RedisKeyUtils;
+import com.qingyun.community.user.feignClient.LikeClient;
 import com.qingyun.community.user.pojo.User;
 import com.qingyun.community.user.service.UserService;
 import com.qingyun.community.user.utils.Constant;
@@ -47,12 +49,21 @@ public class UserController implements Constant {
     @Autowired
     private RedisTemplate redisTemplate;
 
+    @Autowired
+    private LikeClient likeClient;
+
 
 
     @GetMapping("/getUserById/{userId}")
     @ResponseBody
     public User getUserById(@PathVariable(value = "userId") Integer userId) {
         return userService.getUserById(userId);
+    }
+
+    @GetMapping("/getUserByUsername/{username}")
+    @ResponseBody
+    public User getUserByUsername(@PathVariable(value = "username") String username) {
+        return userService.getUserByUsername(username);
     }
 
     @PostMapping("/registerOne")
@@ -187,15 +198,32 @@ public class UserController implements Constant {
     }
 
     @GetMapping("/setting")
-    // TODO: 需要登录才能访问
+    @LoginRequired
     public String setting() {
         return "/site/setting2";
     }
 
     @GetMapping("/updateHeader")
-    // TODO: 需要登录才能访问
-    public void updateHeader(String newHeader, HttpSession session) {
+    @LoginRequired
+    public String updateHeader(String newHeader, HttpSession session) {
         userService.updateHeader(newHeader, session);
+        //  TODO:这里的重定向地址写死为localhost了
+        return "redirect:http://localhost:88/community/post/index";
+    }
+
+    //  查看个人主页
+    @GetMapping(path = "/profile/{userId}")
+    public String getProfilePage(@PathVariable("userId") int userId, Model model){
+        User user = userService.getUserById(userId);
+        if (user == null){
+            throw new RuntimeException("该用户不存在！");
+        }
+
+        model.addAttribute("user",user);
+        long likeCount = likeClient.getUserLikeCount(userId);
+        model.addAttribute("likeCount",likeCount);
+
+        return "/site/profile";
     }
 }
 

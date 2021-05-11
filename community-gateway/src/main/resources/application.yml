@@ -16,3 +16,8 @@ spring:
           uri: lb://community-third
           predicates:
             - Path=/third/**
+
+        - id: message_route
+          uri: lb://community-message
+          predicates:
+            - Path=/message/**

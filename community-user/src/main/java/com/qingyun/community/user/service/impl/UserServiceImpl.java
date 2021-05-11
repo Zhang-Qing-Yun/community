@@ -66,6 +66,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
+    public User getUserByUsername(String username) {
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        wrapper.eq("username", username);
+        return baseMapper.selectOne(wrapper);
+    }
+
+    @Override
     public Map<String, String> register(User user) {
         Map<String, String> map = new HashMap<>();
 
@@ -84,7 +91,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         QueryWrapper<User> wrapper2 = new QueryWrapper<>();
         wrapper2.eq("email", user.getEmail());
-        Integer count2 = baseMapper.selectCount(wrapper);
+        Integer count2 = baseMapper.selectCount(wrapper2);
         if(count2 > 0) {
             map.put("emailMsg","该邮箱已经被注册");
             return map;
@@ -197,7 +204,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public void updateHeader(String newHeader, HttpSession session) {
-        // 修改头像
+        // 修改头像，改数据库
         com.qingyun.community.base.pojo.User user = hostHolder.get();
         user.setHeaderUrl(newHeader);
         User user1 = new User();

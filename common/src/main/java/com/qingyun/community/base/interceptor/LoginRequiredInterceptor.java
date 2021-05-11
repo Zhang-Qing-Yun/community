@@ -17,23 +17,24 @@ import java.lang.reflect.Method;
  * @create: 2021-05-05 23:03
  **/
 @Component
+//  TODO：应该将拦截器移到网关层，而不是在每个微服务模块都加上，不过需要注意此时ThreadLocal是否还是有效的
 public class LoginRequiredInterceptor implements HandlerInterceptor {
     @Autowired
     private HostHolder hostHolder;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        if (handler instanceof HandlerMethod){
+        if (handler instanceof HandlerMethod) {
             HandlerMethod handlerMethod = (HandlerMethod) handler;
             Method method = handlerMethod.getMethod();
 
             LoginRequired loginRequired =method.getAnnotation(LoginRequired.class);
             if (loginRequired != null && hostHolder.get() == null){
-                response.sendRedirect(request.getContextPath()+"/login");
+                //  TODO: 这里的重定向路径写死为localhost了
+                response.sendRedirect("http://localhost:88/user/login");
                 return false;
             }
         }
-
         return true;
     }
 }

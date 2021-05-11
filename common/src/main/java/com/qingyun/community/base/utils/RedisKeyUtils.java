@@ -8,9 +8,35 @@ package com.qingyun.community.base.utils;
 public class RedisKeyUtils {
     private static final String SPLIT = ":";  // 分隔符
     private static final String PREFIX_KAPTCHA = "kaptcha";  // 验证码前缀
+    private static final String PREFIX_ENTITY_LIKE = "like:entity";  // 点赞前缀
+    private static final String PREFIX_USER_LIKE = "like:user";  // 用户收到赞的个数的前缀
 
 
+    /**
+     * 生成具体图片验证码的key
+     * @param owner
+     * @return
+     */
     public static  String getKaptchaKey(String owner){
         return PREFIX_KAPTCHA + SPLIT + owner;
+    }
+
+    /**
+     * 生成具体点赞的key
+     * @param entityType
+     * @param EntityId
+     * @return
+     */
+    public static String getEntityLikeKey(int entityType, int EntityId){
+        return PREFIX_ENTITY_LIKE+SPLIT+entityType+SPLIT+EntityId;
+    }
+
+    /**
+     * 用户收到赞的个数
+     * @param userId
+     * @return
+     */
+    public static String getUserLikeKey(int userId){
+        return PREFIX_USER_LIKE + SPLIT + userId;
     }
 }

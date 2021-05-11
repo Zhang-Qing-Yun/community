@@ -7,18 +7,26 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 
 /**
- * @description：
+ * @description：全局异常处理
  * @author: 張青云
  * @create: 2021-05-02 19:52
  **/
 
-@ControllerAdvice
+@ControllerAdvice  // Controller的全局配置类
 public class GlobalExceptionHandler {
 
+    //  出现异常返回R.error()的Json数据
+//    @ExceptionHandler(Exception.class)
+//    @ResponseBody
+//    public R error(Exception e){
+//        e.printStackTrace();
+//        return R.error().message("执行了全局自定义异常");
+//    }
+
+    //  出现错误返回错误页面
     @ExceptionHandler(Exception.class)
-    @ResponseBody
-    public R error(Exception e){
+    public String error(Exception e){
         e.printStackTrace();
-        return R.error().message("执行了全局自定义异常");
+        return "/error/500";
     }
 }
