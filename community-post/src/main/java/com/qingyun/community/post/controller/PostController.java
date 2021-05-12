@@ -12,7 +12,7 @@ import com.qingyun.community.post.pojo.Post;
 import com.qingyun.community.post.pojo.User;
 import com.qingyun.community.post.service.CommentService;
 import com.qingyun.community.post.service.PostService;
-import com.qingyun.community.post.utils.Constant;
+import com.qingyun.community.base.utils.Constant;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;

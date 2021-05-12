@@ -3,6 +3,7 @@ package com.qingyun.community.user.controller;
 
 import com.google.code.kaptcha.Producer;
 import com.qingyun.community.base.annotation.LoginRequired;
+import com.qingyun.community.base.utils.HostHolder;
 import com.qingyun.community.base.utils.RedisKeyUtils;
 import com.qingyun.community.user.feignClient.LikeClient;
 import com.qingyun.community.user.pojo.User;
@@ -39,7 +40,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Controller
 @RequestMapping("/user")
-public class UserController implements Constant {
+public class UserController implements Constant,com.qingyun.community.base.utils.Constant {
     @Autowired
     private UserService userService;
 
@@ -51,6 +52,9 @@ public class UserController implements Constant {
 
     @Autowired
     private LikeClient likeClient;
+
+    @Autowired
+    private HostHolder hostHolder;
 
 
 
@@ -220,8 +224,22 @@ public class UserController implements Constant {
         }
 
         model.addAttribute("user",user);
+        //  收到的赞的个数
         long likeCount = likeClient.getUserLikeCount(userId);
         model.addAttribute("likeCount",likeCount);
+
+        // 关注数量
+        long followeeCount = likeClient.getFolloweeCount(userId, ENTITY_TYPE_USER);
+        model.addAttribute("followeeCount", followeeCount);
+        // 粉丝数量
+        long followerCount = likeClient.getFollowerCount(ENTITY_TYPE_USER, userId);
+        model.addAttribute("followerCount", followerCount);
+        // 是否已关注
+        boolean hasFollowed = false;
+        if (hostHolder.get() != null) {
+            hasFollowed = likeClient.hasFollowed(hostHolder.get().getId(), ENTITY_TYPE_USER, userId);
+        }
+        model.addAttribute("hasFollowed", hasFollowed);
 
         return "/site/profile";
     }
