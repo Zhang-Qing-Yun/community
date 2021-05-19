@@ -66,12 +66,12 @@
 					<!-- 选项 -->
 					<ul class="nav nav-tabs mb-3">
 						<li class="nav-item">
-							<a class="nav-link position-relative" th:href="@{/letter/list}">
+							<a class="nav-link position-relative" th:href="@{/message/letterList}">
 								朋友私信<span class="badge badge-danger" th:text="${letterUnreadCount}" th:if="${letterUnreadCount!=0}">3</span>
 							</a>
 						</li>
 						<li class="nav-item">
-							<a class="nav-link position-relative active" th:href="@{/notice/list}">
+							<a class="nav-link position-relative active" th:href="@{/message/noticeList}">
 								系统通知<span class="badge badge-danger" th:text="${noticeUnreadCount}" th:if="${noticeUnreadCount!=0}">27</span>
 							</a>
 						</li>
@@ -91,7 +91,7 @@
 									th:text="${#dates.format(commentNotice.message.createTime,'yyyy-MM-dd HH:mm:ss')}">2019-04-28 14:13:25</span>
 							</h6>
 							<div>
-								<a th:href="@{/notice/detail/comment}">
+								<a th:href="@{/message/noticeDetail/comment}">
 									用户
 									<i th:utext="${commentNotice.user.username}">nowcoder</i>
 									评论了你的<b th:text="${commentNotice.entityType==1?'帖子':'回复'}">帖子</b> ...
@@ -113,7 +113,7 @@
 									  th:text="${#dates.format(likeNotice.message.createTime,'yyyy-MM-dd HH:mm:ss')}">2019-04-28 14:13:25</span>
 							</h6>
 							<div>
-								<a th:href="@{/notice/detail/like}">
+								<a th:href="@{/message/noticeDetail/like}">
 									用户
 									<i th:utext="${likeNotice.user.username}">nowcoder</i>
 									点赞了你的<b th:text="${likeNotice.entityType==1?'帖子':'回复'}">帖子</b> ...
@@ -135,7 +135,7 @@
 									  th:text="${#dates.format(followNotice.message.createTime,'yyyy-MM-dd HH:mm:ss')}">2019-04-28 14:13:25</span>
 							</h6>
 							<div>
-								<a th:href="@{/notice/detail/follow}">
+								<a th:href="@{/message/noticeDetail/follow}">
 									用户
 									<i th:utext="${followNotice.user.username}">nowcoder</i>
 									关注了你 ...

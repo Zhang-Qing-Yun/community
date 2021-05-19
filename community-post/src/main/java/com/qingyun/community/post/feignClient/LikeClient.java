@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * @create: 2021-05-11 15:47
  **/
 @Component
-@FeignClient("community-message")
+@FeignClient(value = "community-message", contextId = "likeClient")
 public interface LikeClient {
     @GetMapping("/message/like/getEntityLikeCount")
     @ResponseBody

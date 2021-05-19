@@ -178,11 +178,6 @@ public class UserController implements Constant,com.qingyun.community.base.utils
         int expiredSeconds = rememberme ? REMEMBER_EXPIRED_SECONDS : DEFAULT_EXPIRED_SECONDS;
         Map<String, String> map = userService.login(email, password, expiredSeconds, session);
         if (map.containsKey("ticket")) {
-//            //  登陆成功后将凭证ticket传给cookie，充当session
-//            Cookie cookie = new Cookie("ticket", map.get("ticket"));
-//            cookie.setMaxAge(expiredSeconds);
-//            response.addCookie(cookie);
-
             model.addAttribute("msg","登陆成功！");  // 页面需要的提示信息
             model.addAttribute("target","/community/post/index");  // target是在operate-result.html页面中需要的跳转路径
             return "/site/operate-result";

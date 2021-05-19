@@ -88,13 +88,13 @@
 									用户
 									<i th:utext="${map.user.username}">nowcoder</i>
 									评论了你的<b th:text="${map.entityType==1?'帖子':'回复'}">帖子</b>,
-									<a class="text-primary" th:href="@{|/discuss/detail/${map.postId}|}">点击查看</a> !
+									<a class="text-primary" th:href="@{|/community/post/postDetail/${map.postId}|}">点击查看</a> !
 								</span>
 								<span th:if="${topic.equals('like')}">
 									用户
 									<i th:utext="${map.user.username}">nowcoder</i>
 									点赞了你的<b th:text="${map.entityType==1?'帖子':'回复'}">帖子</b>,
-									<a class="text-primary" th:href="@{|/discuss/detail/${map.postId}|}">点击查看</a> !
+									<a class="text-primary" th:href="@{|/community/post/postDetail/${map.postId}|}">点击查看</a> !
 								</span>
 								<span th:if="${topic.equals('follow')}">
 									用户
@@ -193,7 +193,7 @@
 	<script th:src="@{/js/letter.js}"></script>
 	<script>
 		function back() {
-			location.href = CONTEXT_PATH + "/notice/list";
+			location.href = "/message/noticeList";
 		}
 	</script>
 </body>

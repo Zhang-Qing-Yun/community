@@ -1,6 +1,7 @@
 package com.qingyun.community.message.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.qingyun.community.base.component.SensitiveFilter;
 import com.qingyun.community.base.pojo.User;
 import com.qingyun.community.base.utils.HostHolder;
@@ -74,6 +75,45 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
         Message message = new Message();
         message.setStatus(status);
         baseMapper.update(message, wrapper);
+    }
+
+    @Override
+    public Message getLatestNotice(int userId, String topic) {
+        return baseMapper.getLatestNotice(userId, topic);
+    }
+
+    @Override
+    public int getNoticeCount(int userId, String topic) {
+        QueryWrapper<Message> wrapper = new QueryWrapper<>();
+        wrapper.ne("status", 2);
+        wrapper.eq("from_id", 1);
+        wrapper.eq("to_id", userId);
+        wrapper.eq("conversation_id", topic);
+        return baseMapper.selectCount(wrapper);
+    }
+
+    @Override
+    public int getNoticeUnreadCount(int userId, String topic) {
+        QueryWrapper<Message> wrapper = new QueryWrapper<>();
+        wrapper.eq("status", 0);
+        wrapper.eq("from_id", 1);
+        wrapper.eq("to_id", userId);
+        if(topic != null) {
+            wrapper.eq("conversation_id", topic);
+        }
+        return baseMapper.selectCount(wrapper);
+    }
+
+    @Override
+    public List<Message> getNotices(int userId, String topic, int offset, int limit) {
+        return baseMapper.getNotices(userId, topic, offset, limit);
+    }
+
+    @Override
+    public int getUnreadCount(int userId) {
+        int noticeCount = getNoticeUnreadCount(userId, null);
+        int lettersCount = getUnReadLettersCount(userId, null);
+        return noticeCount+lettersCount;
     }
 
 }

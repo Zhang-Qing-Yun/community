@@ -67,4 +67,45 @@ public interface MessageService extends IService<Message> {
      * @param status
      */
     void updateMessageStatus(List<Integer> ids, int status);
+
+    /**
+     * 查询某个topic下最新的一条消息
+     * @param userId
+     * @param topic
+     * @return
+     */
+    Message getLatestNotice(int userId, String topic);
+
+    /**
+     * 查询某个主题所包含的通知数量
+     * @param userId
+     * @param topic
+     * @return
+     */
+    int getNoticeCount(int userId, String topic);
+
+    /**
+     * 查询未读的通知的数量
+     * @param userId
+     * @param topic  如果topic为null，则查询全部主题
+     * @return
+     */
+    int getNoticeUnreadCount(int userId, String topic);
+
+    /**
+     *  查询某个topic的全部消息
+     * @param userId
+     * @param topic
+     * @param offset
+     * @param limit
+     * @return
+     */
+    List<Message> getNotices(int userId, String topic, int offset, int limit);
+
+    /**
+     * 查询未读消息的数量，包括私信、系统消息
+     * @param userId
+     * @return
+     */
+    int getUnreadCount(int userId);
 }

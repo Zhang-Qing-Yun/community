@@ -111,4 +111,9 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         }
 
     }
+
+    @Override
+    public Comment getCommentById(int id) {
+        return baseMapper.selectById(id);
+    }
 }

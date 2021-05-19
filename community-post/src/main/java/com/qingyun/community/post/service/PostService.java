@@ -42,4 +42,5 @@ public interface PostService extends IService<Post> {
      * @param newCount 帖子的新评论数
      */
     void updateCommentCount(Integer id, Integer newCount);
+
 }

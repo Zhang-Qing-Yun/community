@@ -51,4 +51,23 @@ public interface MessageMapper extends BaseMapper<Message> {
             "        and from_id != 1\n" +
             "        and conversation_id = #{conversationId}")
     int getConversationCountById(String conversationId);
+
+    // 查询某个主题下最新的通知
+    @Select("select * from message where id in (\n" +
+            "            select max(id) from message\n" +
+            "            where status != 2\n" +
+            "            and from_id = 1\n" +
+            "            and to_id = #{userId}\n" +
+            "            and conversation_id = #{topic}\n" +
+            "        )")
+    Message getLatestNotice(int userId, String topic);
+
+    @Select("        select * from message\n" +
+            "        where status != 2\n" +
+            "        and from_id = 1\n" +
+            "        and to_id = #{userId}\n" +
+            "        and conversation_id = #{topic}\n" +
+            "        order by create_time desc\n" +
+            "        limit #{offset}, #{limit}")
+    List<Message> getNotices(int userId, String topic, int offset, int limit);
 }

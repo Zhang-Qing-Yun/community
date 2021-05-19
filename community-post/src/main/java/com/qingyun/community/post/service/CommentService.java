@@ -29,4 +29,11 @@ public interface CommentService extends IService<Comment> {
      * @param comment
      */
     void addComment(Comment comment);
+
+    /**
+     * 根据评论id获取评论
+     * @param id
+     * @return
+     */
+    Comment getCommentById(int id);
 }

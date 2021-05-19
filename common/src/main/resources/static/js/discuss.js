@@ -1,4 +1,4 @@
-function like(btn, entityType, entityId, entityUserId) {
+function like(btn, entityType, entityId, entityUserId, postId) {
     let entityUserId2 = 0;
     if (typeof (entityUserId) === 'string') {
         entityUserId2 = parseInt(entityUserId);
@@ -7,7 +7,7 @@ function like(btn, entityType, entityId, entityUserId) {
     }
     $.post(
         "/message/like/likeOne",
-        {"entityType":entityType,"entityId":entityId,"entityUserId":entityUserId2},
+        {"entityType":entityType,"entityId":entityId,"entityUserId":entityUserId2,"postId":postId},
         function(data) {
             // data = $.parseJSON(data);
             if(data.code === 20000) {

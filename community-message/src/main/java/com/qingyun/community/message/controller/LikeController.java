@@ -1,9 +1,12 @@
 package com.qingyun.community.message.controller;
 
 import com.qingyun.community.base.annotation.LoginRequired;
+import com.qingyun.community.base.pojo.Event;
 import com.qingyun.community.base.pojo.User;
+import com.qingyun.community.base.utils.Constant;
 import com.qingyun.community.base.utils.HostHolder;
 import com.qingyun.community.base.utils.R;
+import com.qingyun.community.message.component.EventProducer;
 import com.qingyun.community.message.service.LikeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -29,10 +32,13 @@ public class LikeController {
     @Autowired
     private HostHolder hostHolder;
 
+    @Autowired
+    private EventProducer eventProducer;
+
     @PostMapping("/likeOne")
     @ResponseBody
     @LoginRequired
-    public R likeOne(int entityType, int entityId, int entityUserId) {
+    public R likeOne(int entityType, int entityId, int entityUserId, int postId) {
         //  获取当前登陆对象
         User user  = hostHolder.get();
 
@@ -46,6 +52,18 @@ public class LikeController {
         Map<String,Object> map  = new HashMap<>();
         map.put("likeCount", likeCount);
         map.put("likeStatus", likeStatus);
+
+        // 触发点赞事件
+        if (likeStatus == 1) {
+            Event event = new Event()
+                    .setTopic(Constant.TOPIC_LIKE)
+                    .setUserId(user.getId())
+                    .setEntityType(entityType)
+                    .setEntityId(entityId)
+                    .setEntityUserId(entityUserId)
+                    .setData("postId", postId);
+            eventProducer.fireEvent(event);
+        }
 
         return R.ok().data(map);
     }

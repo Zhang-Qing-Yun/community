@@ -1,11 +1,13 @@
 package com.qingyun.community.message.controller;
 
 import com.qingyun.community.base.annotation.LoginRequired;
+import com.qingyun.community.base.pojo.Event;
 import com.qingyun.community.base.pojo.Page;
 import com.qingyun.community.base.pojo.User;
 import com.qingyun.community.base.utils.Constant;
 import com.qingyun.community.base.utils.HostHolder;
 import com.qingyun.community.base.utils.R;
+import com.qingyun.community.message.component.EventProducer;
 import com.qingyun.community.message.feignClient.UserClient;
 import com.qingyun.community.message.service.FollowService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +39,9 @@ public class FollowController implements Constant {
     @Autowired
     private UserClient userClient;
 
+    @Autowired
+    private EventProducer eventProducer;
+
     /**
      * 判断当前用户是否关注了某个用户
      * @param userId
@@ -55,6 +60,16 @@ public class FollowController implements Constant {
     public R follow(int entityType, int entityId) {
         User user = hostHolder.get();
         followService.follow(user.getId(), entityType, entityId);
+
+        // 触发关注事件
+        Event event = new Event()
+                .setTopic(TOPIC_FOLLOW)
+                .setUserId(user.getId())
+                .setEntityType(entityType)
+                .setEntityId(entityId)
+                .setEntityUserId(entityId);
+        eventProducer.fireEvent(event);
+
         return R.ok().message("关注成功");
     }
 
