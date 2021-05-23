@@ -18,6 +18,7 @@ public class EventProducer {
     // 处理事件
     public void fireEvent(Event event) {
         // 将事件发布到对应的队列里，路由键为event.getTopic()
+        //  TODO：加上消息可靠投递
         rabbitTemplate.convertAndSend("message-event-exchange", event.getTopic(), event);
     }
 }

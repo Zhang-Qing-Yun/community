@@ -6,6 +6,7 @@ import com.qingyun.community.base.pojo.Event;
 import com.qingyun.community.base.utils.Constant;
 import com.qingyun.community.base.utils.HostHolder;
 import com.qingyun.community.post.feignClient.MessageClient;
+import com.qingyun.community.post.feignClient.SearchClient;
 import com.qingyun.community.post.pojo.Comment;
 import com.qingyun.community.post.pojo.Post;
 import com.qingyun.community.post.service.CommentService;
@@ -40,6 +41,9 @@ public class CommentController {
     @Autowired
     private MessageClient messageClient;
 
+    @Autowired
+    private SearchClient searchClient;
+
 
     @PostMapping("/addComment/{postId}")
     @LoginRequired
@@ -59,11 +63,14 @@ public class CommentController {
         if (comment.getEntityType() == Constant.ENTITY_TYPE_POST) {  // 评论的是帖子
             Post target = postService.getPostDetail(comment.getEntityId());
             event.setEntityUserId(Integer.parseInt(target.getUserId()));
+            //  更新ES
+            searchClient.addPostToES(target);
         } else if (comment.getEntityType() == Constant.ENTITY_TYPE_COMMENT) {  // 评论的是评论
             Comment target = commentService.getCommentById(comment.getEntityId());
             event.setEntityUserId(target.getUserId());
         }
         messageClient.addEventToMq(event);
+
 
 
         //  TODO: 重定向路径写死为localhost了

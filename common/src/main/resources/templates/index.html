@@ -50,8 +50,8 @@
 						</li>
 					</ul>
 					<!-- 搜索 -->
-					<form class="form-inline my-2 my-lg-0" action="site/search.html">
-						<input class="form-control mr-sm-2" type="search" aria-label="Search" />
+					<form class="form-inline my-2 my-lg-0" method="get" th:action="@{/search/searchFromES}">
+						<input class="form-control mr-sm-2" type="search" aria-label="Search" name="keyword" th:value="${keyword}"/>
 						<button class="btn btn-outline-light my-2 my-sm-0" type="submit">搜索</button>
 					</form>
 				</div>
@@ -111,7 +111,7 @@
 							<h5 class="modal-title" id="hintModalLabel">提示</h5>
 						</div>
 						<div class="modal-body" id="hintBody">
-							发布完毕!
+							发布失败，请重试!
 						</div>
 					</div>
 				</div>

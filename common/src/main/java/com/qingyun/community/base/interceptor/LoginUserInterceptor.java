@@ -2,6 +2,7 @@ package com.qingyun.community.base.interceptor;
 
 import com.qingyun.community.base.pojo.User;
 import com.qingyun.community.base.utils.HostHolder;
+import org.apache.catalina.connector.RequestFacade;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -27,7 +28,6 @@ public class LoginUserInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         //  查询是否登陆过
         HttpSession session = request.getSession();
-        Cookie[] cookies = request.getCookies();
         User user = (User) session.getAttribute("loginUser");
         if(user != null) {
             threadLocal.set(user);

@@ -1,6 +1,5 @@
-package com.qingyun.community.message;
+package com.qingyun.community.search;
 
-import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
@@ -10,21 +9,15 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
 
-/**
- * @description：
- * @author: 張青云
- * @create: 2021-05-09 17:59
- **/
-@SpringBootApplication
-@ComponentScan(basePackages = {"com.qingyun"})  // 去扫描该包下的注解
-@EnableDiscoveryClient  // 注册到nacos中
+@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
+@EnableDiscoveryClient
 @EnableFeignClients
-@EnableRedisHttpSession
-@EnableRabbit
-public class MessageApplication {
+@ComponentScan(basePackages = {"com.qingyun"})  // 去扫描该包下的注解
+@EnableRedisHttpSession  // 开启spring session
+public class SearchApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(MessageApplication.class, args);
+        SpringApplication.run(SearchApplication.class, args);
     }
 
 }

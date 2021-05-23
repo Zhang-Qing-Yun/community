@@ -1,10 +1,10 @@
-package com.qingyun.community.user.config;
+package com.qingyun.community.search.config;
 
 import com.qingyun.community.base.interceptor.LoginRequiredInterceptor;
 import com.qingyun.community.base.interceptor.LoginUserInterceptor;
 import com.qingyun.community.base.pojo.User;
 import com.qingyun.community.base.utils.HostHolder;
-import com.qingyun.community.user.feignClient.MessageClient;
+import com.qingyun.community.search.feignClient.MessageClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -48,11 +48,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
             public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
                 User user = hostHolder.get();
                 if (user != null && modelAndView != null) {
-                    System.out.println(messageClient.getUnreadCount());
                     modelAndView.addObject("allUnreadCount", messageClient.getUnreadCount());
                 }
             }
-        }).excludePathPatterns("/**/*.css","/**/*.js","/**/*.png","/**/*.jpg","/**/*.jpeg",
-                "/user/kaptcha", "/user/register", "/user/login", "/user/api_login");
+        }).excludePathPatterns("/**/*.css","/**/*.js","/**/*.png","/**/*.jpg","/**/*.jpeg");
     }
 }

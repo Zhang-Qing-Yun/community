@@ -21,3 +21,8 @@ spring:
           uri: lb://community-message
           predicates:
             - Path=/message/**
+
+        - id: search_route
+          uri: lb://community-search
+          predicates:
+            - Path=/search/**

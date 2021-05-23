@@ -31,6 +31,7 @@
         <module>community-gateway</module>
         <module>community-third</module>
         <module>community-message</module>
+        <module>community-search</module>
     </modules>
 
     <dependencyManagement>

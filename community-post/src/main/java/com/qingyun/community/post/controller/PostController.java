@@ -2,9 +2,11 @@ package com.qingyun.community.post.controller;
 
 
 import com.qingyun.community.base.annotation.LoginRequired;
+import com.qingyun.community.base.exception.CommunityException;
 import com.qingyun.community.base.utils.HostHolder;
 import com.qingyun.community.base.utils.R;
 import com.qingyun.community.post.feignClient.LikeClient;
+import com.qingyun.community.post.feignClient.SearchClient;
 import com.qingyun.community.post.feignClient.UserClient;
 import com.qingyun.community.post.pojo.Comment;
 import com.qingyun.community.post.pojo.Page;
@@ -15,9 +17,11 @@ import com.qingyun.community.post.service.PostService;
 import com.qingyun.community.base.utils.Constant;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.ui.Model;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -50,6 +54,8 @@ public class PostController implements Constant {
     @Autowired
     private HostHolder hostHolder;
 
+    @Autowired
+    private SearchClient searchClient;
 
 
     @GetMapping("/index")
@@ -90,8 +96,9 @@ public class PostController implements Constant {
 
     @PostMapping("/postOne")
     @ResponseBody
+    @Transactional
     @LoginRequired
-    public R postOne(String title, String content){
+    public R postOne(String title, String content, HttpServletRequest request){
         //  获取当前登录对象
         com.qingyun.community.base.pojo.User user = hostHolder.get();
         //  创建post对象
@@ -99,8 +106,19 @@ public class PostController implements Constant {
         post.setUserId(String.valueOf(user.getId()));
         post.setTitle(title);
         post.setContent(content);
-        postService.postOne(post);
+        post.setCommentCount(0);
+        post.setScore(0.0);
+        post.setType(0);
+        post.setStatus(0);
 
+        try {
+            postService.postOne(post);
+            //  插入到ES中
+            searchClient.addPostToES(post);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new CommunityException(20001, "发布失败，请重试！");
+        }
         return R.ok().message("发布成功！");
     }
 
