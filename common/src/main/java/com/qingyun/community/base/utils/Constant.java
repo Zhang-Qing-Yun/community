@@ -32,4 +32,19 @@ public interface Constant {
      * 系统用户id
      */
     int SYSTEM_USER_ID = 1;
+
+    /**
+     * 权限: 普通用户
+     */
+    int AUTHORITY_USER = 0;
+
+    /**
+     * 权限: 版主
+     */
+    int AUTHORITY_MODERATOR = 1;
+
+    /**
+     * 权限: 管理员
+     */
+    int AUTHORITY_ADMIN = 2;
 }

@@ -46,6 +46,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         if(userId != null) {
             wrapper.eq("user_id", userId);
         }
+        //  查询没有被删除的
+        wrapper.ne("status", 2);
         //  按帖子id降序，这样就保证了时间顺序
         wrapper.orderByDesc("id");
         baseMapper.selectPage(page, wrapper);
@@ -101,5 +103,23 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         post.setId(id);
         post.setCommentCount(newCount);
         baseMapper.updateById(post);
+    }
+
+    @Override
+    public Post updateType(Integer id, Integer type) {
+        Post post = new Post();
+        post.setId(id);
+        post.setType(type);
+        baseMapper.updateById(post);
+        return getPostDetail(id);
+    }
+
+    @Override
+    public Post updateStatus(Integer id, Integer status) {
+        Post post = new Post();
+        post.setId(id);
+        post.setStatus(status);
+        baseMapper.updateById(post);
+        return getPostDetail(id);
     }
 }

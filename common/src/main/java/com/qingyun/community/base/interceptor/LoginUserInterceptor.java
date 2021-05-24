@@ -2,13 +2,11 @@ package com.qingyun.community.base.interceptor;
 
 import com.qingyun.community.base.pojo.User;
 import com.qingyun.community.base.utils.HostHolder;
-import org.apache.catalina.connector.RequestFacade;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;

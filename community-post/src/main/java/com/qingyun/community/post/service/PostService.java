@@ -43,4 +43,19 @@ public interface PostService extends IService<Post> {
      */
     void updateCommentCount(Integer id, Integer newCount);
 
+    /**
+     * 修改帖子的类型
+     * @param id 帖子id
+     * @param type 要修改成的值
+     * @return 修改后的帖子
+     */
+    Post updateType(Integer id, Integer type);
+
+    /**
+     * 修改帖子的状态
+     * @param id 帖子id
+     * @param status 要修改成的值
+     * @return 修改后的帖子
+     */
+    Post updateStatus(Integer id, Integer status);
 }

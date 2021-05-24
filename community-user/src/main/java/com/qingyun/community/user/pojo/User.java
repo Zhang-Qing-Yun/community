@@ -45,7 +45,7 @@ public class User implements Serializable {
     @Email(message = "邮箱格式不正确")
     private String email;
 
-    @ApiModelProperty(value = "0-普通用户; 1-超级管理员; 2-版主;")
+    @ApiModelProperty(value = "0-普通用户; 1-版主; 2-超级管理员; ")
     private Integer type;
 
     @ApiModelProperty(value = "0-未激活; 1-已激活;")

@@ -156,7 +156,7 @@ public class PostController implements Constant {
                 // 作者
                 commentVo.put("user", userClient.getUserById(comment.getUserId()));
                 // 评论的点赞数
-                likeCount = likeClient.getEntityLikeCount(ENTITY_TYPE_COMMENT,comment.getId());
+                likeCount = likeClient.getEntityLikeCount(ENTITY_TYPE_COMMENT, comment.getId());
                 commentVo.put("likeCount", likeCount);
                 // 当前用户对评论的点赞状态
                 likeStatus = hostHolder.get()==null?0:likeClient.getEntityLikeStatus(hostHolder.get().getId(),ENTITY_TYPE_COMMENT,comment.getId());
@@ -202,5 +202,72 @@ public class PostController implements Constant {
         // TODO: 增加帖子回复等其它内容
         return "/site/discuss-detail";
     }
+
+    /**
+     * 置顶
+     * @param id 帖子id
+     * @return 操作的结果
+     */
+    @PostMapping("/top")
+    @ResponseBody
+    @Transactional
+    @LoginRequired(Constant.AUTHORITY_MODERATOR)  // 需要版主权限
+    public R setTop(int id) {
+
+        try {
+            Post post = postService.updateType(id, 1);
+            //  插入到ES中
+            searchClient.addPostToES(post);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new CommunityException(20001, "操作失败，请重试！");
+        }
+        return R.ok().message("操作成功！");
+    }
+
+    /**
+     * 加精
+     * @param id 帖子id
+     * @return 操作的结果
+     */
+    @PostMapping("/wonderful")
+    @ResponseBody
+    @Transactional
+    @LoginRequired(Constant.AUTHORITY_MODERATOR)  // 需要版主权限
+    public R setWonderful(int id) {
+
+        try {
+            Post post = postService.updateStatus(id, 1);
+            //  插入到ES中
+            searchClient.addPostToES(post);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new CommunityException(20001, "操作失败，请重试！");
+        }
+        return R.ok().message("操作成功！");
+    }
+
+    /**
+     * 删除
+     * @param id 帖子id
+     * @return 操作的结果
+     */
+    @PostMapping("/delete")
+    @ResponseBody
+    @Transactional
+    @LoginRequired(Constant.AUTHORITY_ADMIN)  // 需要管理员权限
+    public R delete(int id) {
+
+        try {
+            postService.updateStatus(id, 2);
+            //  从ES当中删除
+            searchClient.deletePostFromES(id);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new CommunityException(20001, "操作失败，请重试！");
+        }
+        return R.ok().message("操作成功！");
+    }
+
 }
 
