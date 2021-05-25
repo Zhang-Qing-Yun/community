@@ -9,6 +9,9 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.SessionCallback;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @description：使用redis来保存点赞业务，选用set数据结构，key是like:entity:entityType:entityId，value值里的内容是对该entity点过赞的userId
  * @author: 張青云
@@ -52,9 +55,27 @@ public class LikeServiceImpl implements LikeService {
     }
 
     @Override
+    public List<Long> getEntitiesLikeCount(int entityType, List<Integer> entityIds) {
+        List<Long> res = new ArrayList<>(entityIds.size());
+        for(int entityId: entityIds) {
+            res.add(getEntityLikeCount(entityType, entityId));
+        }
+        return res;
+    }
+
+    @Override
     public int getEntityLikeStatus(int userId, int entityType, int entityId) {
         String entityLikeKey = RedisKeyUtils.getEntityLikeKey(entityType, entityId);
         return redisTemplate.opsForSet().isMember(entityLikeKey, userId) ? 1 : 0;
+    }
+
+    @Override
+    public List<Integer> getEntitiesLikeStatus(int userId, int entityType, List<Integer> entityIds) {
+        List<Integer> res = new ArrayList<>(entityIds.size());
+        for(int entityId: entityIds) {
+            res.add(getEntityLikeStatus(userId, entityType, entityId));
+        }
+        return res;
     }
 
     @Override

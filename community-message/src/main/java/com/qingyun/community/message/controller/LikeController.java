@@ -10,12 +10,10 @@ import com.qingyun.community.message.component.EventProducer;
 import com.qingyun.community.message.service.LikeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -70,14 +68,31 @@ public class LikeController {
 
     @GetMapping("/getEntityLikeCount")
     @ResponseBody
-    public long getEntityLikeCount(int entityType, int entityId) {
+    public long getEntityLikeCount(@RequestParam("entityType")int entityType,
+                                   @RequestParam("entityId")int entityId) {
         return likeService.getEntityLikeCount(entityType, entityId);
+    }
+
+    @GetMapping("/getEntitiesLikeCount")
+    @ResponseBody
+    public List<Long> getEntitiesLikeCount(@RequestParam("entityType") int entityType,
+                                           @RequestParam("entityIds") List<Integer> entityIds) {
+        return likeService.getEntitiesLikeCount(entityType, entityIds);
     }
 
     @GetMapping("/getEntityLikeStatus")
     @ResponseBody
-    public int getEntityLikeStatus(int userId, int entityType, int entityId) {
+    public int getEntityLikeStatus(@RequestParam("userId")int userId, @RequestParam("entityType")int entityType,
+                                   @RequestParam("entityId")int entityId) {
         return likeService.getEntityLikeStatus(userId, entityType, entityId);
+    }
+
+
+    @GetMapping("/getEntitiesLikeStatus")
+    @ResponseBody
+    public List<Integer> getEntitiesLikeStatus(@RequestParam("userId") int userId, @RequestParam("entityType") int entityType,
+                                               @RequestParam("entityIds") List<Integer> entityIds) {
+        return likeService.getEntitiesLikeStatus(userId, entityType, entityIds);
     }
 
     @GetMapping("/getUserLikeCount")

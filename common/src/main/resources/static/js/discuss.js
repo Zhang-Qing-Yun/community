@@ -15,11 +15,11 @@ function like(btn, entityType, entityId, entityUserId, postId) {
         "/message/like/likeOne",
         {"entityType":entityType,"entityId":entityId,"entityUserId":entityUserId2,"postId":postId},
         function(data) {
-            // data = $.parseJSON(data);
             if(data.code === 20000) {
                 $(btn).children("i").text(data.data.likeCount);
                 $(btn).children("b").text(data.data.likeStatus === 1 ? '已赞' : "赞");
             } else {
+                data = $.parseJSON(data);
                 alert(data.message);
             }
         }

@@ -27,6 +27,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -62,6 +63,12 @@ public class UserController implements Constant,com.qingyun.community.base.utils
     @ResponseBody
     public User getUserById(@PathVariable(value = "userId") Integer userId) {
         return userService.getUserById(userId);
+    }
+
+    @GetMapping("/getUsersByIds")
+    @ResponseBody
+    public List<User> getUsersByIds(@RequestParam("ids") List<Integer> ids) {
+        return userService.getUsersByIds(ids);
     }
 
     @GetMapping("/getUserByUsername/{username}")

@@ -5,7 +5,10 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.util.List;
 
 /**
  * @description：
@@ -19,4 +22,7 @@ public interface UserClient {
     @ResponseBody
     public User getUserById(@PathVariable(value = "userId") Integer userId);
 
+    @GetMapping("/user/getUsersByIds")
+    @ResponseBody
+    public List<User> getUsersByIds(@RequestParam("ids") List<Integer> ids);
 }

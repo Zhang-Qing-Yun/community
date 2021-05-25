@@ -1,5 +1,7 @@
 package com.qingyun.community.message.service;
 
+import java.util.List;
+
 /**
  * @description：
  * @author: 張青云
@@ -23,6 +25,14 @@ public interface LikeService {
     long getEntityLikeCount(int entityType, int entityId);
 
     /**
+     * 批量获取某些entity的点赞数
+     * @param entityType
+     * @param entityIds
+     * @return
+     */
+    List<Long> getEntitiesLikeCount(int entityType, List<Integer> entityIds);
+
+    /**
      * 查询某人对某entity的点赞状态
      * @param userId
      * @param entityType
@@ -30,6 +40,15 @@ public interface LikeService {
      * @return 返回1说明点过赞，返回0说明没有点过赞
      */
     int getEntityLikeStatus(int userId, int entityType, int entityId);
+
+    /**
+     * 批量获取某人对某些entity的点赞状态
+     * @param userId
+     * @param entityType
+     * @param entityIds
+     * @return
+     */
+    List<Integer> getEntitiesLikeStatus(int userId, int entityType, List<Integer> entityIds);
 
     /**
      * 获取某个用户收到的赞的个数

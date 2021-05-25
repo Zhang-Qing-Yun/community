@@ -20,12 +20,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.ui.Model;
+import org.thymeleaf.expression.Ids;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * <p>
@@ -78,12 +76,23 @@ public class PostController implements Constant {
 
         List<Map<String, Object>> posts = new ArrayList<>();
         if(items != null && items.size() != 0) {
+            List<Integer> userIds = new ArrayList<>();
+            List<Integer> postIds = new ArrayList<>();
             for(Post post: items) {
+                userIds.add(Integer.parseInt(post.getUserId()));
+                postIds.add(post.getId());
+            }
+            //  查询post的作者信息
+            List<User> users = userClient.getUsersByIds(userIds);
+            //  查询post的点赞数量
+            List<Long> entitiesLikeCount = likeClient.getEntitiesLikeCount(ENTITY_TYPE_POST, postIds);
+            for (int i = 0; i < items.size(); i++)   {
+                Post post = items.get(i);
                 Map<String, Object> map = new HashMap<>();
                 map.put("post", post);
-                User user = userClient.getUserById(Integer.parseInt(post.getUserId()));
+                User user = users.get(i);
                 map.put("user", user);
-                long likeCount = likeClient.getEntityLikeCount(ENTITY_TYPE_POST, post.getId());
+                long likeCount = entitiesLikeCount.get(i);
                 map.put("likeCount",likeCount);
                 posts.add(map);
             }
@@ -147,32 +156,68 @@ public class PostController implements Constant {
 
         //  封装每一条评论
         List<Map<String, Object>> commentVoList = new ArrayList<>();
-        if (commentList != null) {
-            for (Comment comment : commentList) {
+        if (commentList != null && commentList.size() != 0) {
+            List<Integer> userIds = new ArrayList<>();
+            List<Integer> commentIds = new ArrayList<>();
+            for(Comment comment: commentList) {
+                userIds.add(comment.getUserId());
+                commentIds.add(comment.getId());
+            }
+            //  查询comment的作者信息
+            List<User> users = userClient.getUsersByIds(userIds);
+            //  查询comment的点赞数量
+            List<Long> entitiesLikeCount = likeClient.getEntitiesLikeCount(ENTITY_TYPE_COMMENT, commentIds);
+            //  点赞状态，如果当前未登录则使用默认的初始化值0，否则去远程调用服务查询
+            List<Integer> likeStatusList = null;
+            if(hostHolder.get() != null) {  // 登录
+                likeStatusList = likeClient.getEntitiesLikeStatus(hostHolder.get().getId(), ENTITY_TYPE_COMMENT, commentIds);
+            } else {  // 未登录
+                likeStatusList = Arrays.asList(new Integer[commentList.size()]);  // List里的元素都是null
+            }
+            for (int i = 0; i < commentList.size(); i++) {
+                Comment comment = commentList.get(i);
                 // 评论VO
                 Map<String, Object> commentVo = new HashMap<>();
                 // 评论
                 commentVo.put("comment", comment);
                 // 作者
-                commentVo.put("user", userClient.getUserById(comment.getUserId()));
+                commentVo.put("user", users.get(i));
                 // 评论的点赞数
-                likeCount = likeClient.getEntityLikeCount(ENTITY_TYPE_COMMENT, comment.getId());
+                likeCount = entitiesLikeCount.get(i);
                 commentVo.put("likeCount", likeCount);
                 // 当前用户对评论的点赞状态
-                likeStatus = hostHolder.get()==null?0:likeClient.getEntityLikeStatus(hostHolder.get().getId(),ENTITY_TYPE_COMMENT,comment.getId());
+                likeStatus = likeStatusList.get(i) == null ? 0 : likeStatusList.get(i);
                 commentVo.put("likeStatus",likeStatus);
                 // 回复列表
                 Map<String, Object> replyMap = commentService.getCommentByEntityId(null, ENTITY_TYPE_COMMENT, comment.getId());
                 List<Comment> replyList = (List<Comment>) replyMap.get("items");
                 // 回复VO列表
                 List<Map<String, Object>> replyVoList = new ArrayList<>();
-                if (replyList != null) {
-                    for (Comment reply : replyList) {
+                if (replyList != null && replyList.size() != 0) {
+                    List<Integer> replyUserIds = new ArrayList<>();
+                    List<Integer> replyIds = new ArrayList<>();
+                    for(Comment reply: replyList) {
+                        replyUserIds.add(reply.getUserId());
+                        replyIds.add(reply.getId());
+                    }
+                    //  远程调用，批量查询
+                    List<User> replyUsers = userClient.getUsersByIds(replyUserIds);
+                    List<Long> replyLikeCount = likeClient.getEntitiesLikeCount(ENTITY_TYPE_COMMENT, replyIds);
+                    //  点赞状态，如果当前未登录则使用默认的初始化值0，否则远程调用服务查询
+                    List<Integer> replyLikeStatusList = null;
+                    if(hostHolder.get() != null) {  // 登录
+                        replyLikeStatusList = likeClient.getEntitiesLikeStatus(hostHolder.get().getId(), ENTITY_TYPE_COMMENT, replyIds);
+                    } else {  // 未登录
+                        replyLikeStatusList = Arrays.asList(new Integer[commentList.size()]);  // List里的元素都是null
+                    }
+
+                    for(int j = 0; j < replyList.size(); j++) {
+                        Comment reply = replyList.get(j);
                         Map<String, Object> replyVo = new HashMap<>();
                         // 回复
                         replyVo.put("reply", reply);
                         // 作者
-                        replyVo.put("user", userClient.getUserById(reply.getUserId()));
+                        replyVo.put("user", replyUsers.get(j));
                         // 回复目标
                         User target = null;
                         if (reply.getTargetId() != null && reply.getTargetId() != 0) {
@@ -180,12 +225,11 @@ public class PostController implements Constant {
                         }
                         replyVo.put("target", target);
                         // 回复的点赞数
-                        likeCount = likeClient.getEntityLikeCount(ENTITY_TYPE_COMMENT, reply.getId());
+                        likeCount = replyLikeCount.get(j);
                         replyVo.put("likeCount", likeCount);
                         // 当前用户对回复的点赞状态
-                        likeStatus = hostHolder.get() == null ? 0 : likeClient.getEntityLikeStatus(hostHolder.get().getId(),ENTITY_TYPE_COMMENT,reply.getId());
+                        likeStatus = replyLikeStatusList.get(j) == null ? 0 : replyLikeStatusList.get(j);
                         replyVo.put("likeStatus", likeStatus);
-
                         replyVoList.add(replyVo);
                     }
                 }
@@ -199,7 +243,6 @@ public class PostController implements Constant {
         model.addAttribute("comments", commentVoList);
         model.addAttribute("page", page);
 
-        // TODO: 增加帖子回复等其它内容
         return "/site/discuss-detail";
     }
 

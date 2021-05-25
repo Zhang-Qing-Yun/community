@@ -21,9 +21,7 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
 import javax.servlet.http.HttpSession;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -66,11 +64,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
+    public List<User> getUsersByIds(List<Integer> ids) {
+        return baseMapper.getUsersByIds(ids);
+    }
+
+    @Override
     public User getUserByUsername(String username) {
         QueryWrapper<User> wrapper = new QueryWrapper<>();
         wrapper.eq("username", username);
-        User user = baseMapper.selectOne(wrapper);
-        return user;
+        return baseMapper.selectOne(wrapper);
     }
 
     @Override

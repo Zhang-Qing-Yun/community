@@ -4,6 +4,7 @@ import com.qingyun.community.user.pojo.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import javax.servlet.http.HttpSession;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -21,6 +22,13 @@ public interface UserService extends IService<User> {
      * @return
      */
     User getUserById(Integer userId);
+
+    /**
+     * 根据id列表批量获取对应的User完整信息
+     * @param ids
+     * @return
+     */
+    List<User> getUsersByIds(List<Integer> ids);
 
     /**
      * 根据用户名查询用户（用户名是唯一的）
