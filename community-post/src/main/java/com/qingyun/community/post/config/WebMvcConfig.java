@@ -5,6 +5,7 @@ import com.qingyun.community.base.interceptor.LoginUserInterceptor;
 import com.qingyun.community.base.pojo.User;
 import com.qingyun.community.base.utils.HostHolder;
 import com.qingyun.community.post.feignClient.MessageClient;
+import com.qingyun.community.post.service.DataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -34,6 +35,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Autowired
     private MessageClient messageClient;
 
+    @Autowired
+    private DataService dataService;
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(loginUserInterceptor)
@@ -50,6 +54,24 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 if (user != null && modelAndView != null) {
                     modelAndView.addObject("allUnreadCount", messageClient.getUnreadCount());
                 }
+            }
+        }).excludePathPatterns("/**/*.css","/**/*.js","/**/*.png","/**/*.jpg","/**/*.jpeg");
+
+        //  统计
+        registry.addInterceptor(new HandlerInterceptor() {
+            @Override
+            public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+                // 统计UV
+                String ip = request.getRemoteHost();
+                dataService.addUV(ip);
+
+                // 统计DAU
+                User user = hostHolder.get();
+                if (user != null) {
+                    dataService.recordDAU(user.getId());
+                }
+
+                return true;
             }
         }).excludePathPatterns("/**/*.css","/**/*.js","/**/*.png","/**/*.jpg","/**/*.jpeg");
     }
