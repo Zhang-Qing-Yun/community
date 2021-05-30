@@ -33,7 +33,7 @@ public class DataServiceImpl implements DataService {
 
     @Override
     public long calculateUV(LocalDateTime start, LocalDateTime end) {
-        if (start == null || end == null || start.isBefore(end)) {
+        if (start == null || end == null || start.isAfter(end)) {
             throw new IllegalArgumentException("待统计的日期参数不合法！");
         }
         //  合并后的数据的新key
@@ -55,7 +55,7 @@ public class DataServiceImpl implements DataService {
 
     @Override
     public long calculateDAU(LocalDateTime start, LocalDateTime end) {
-        if (start == null || end == null || start.isBefore(end)) {
+        if (start == null || end == null || start.isAfter(end)) {
             throw new IllegalArgumentException("待统计的日期参数不合法！");
         }
         String unionKey = RedisKeyUtils.getDAUKey(formatter.format(start), formatter.format(end));

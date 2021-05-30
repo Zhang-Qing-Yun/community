@@ -19,7 +19,7 @@ public class FeignConfig {
     @Bean
     public RequestInterceptor requestInterceptor() {
         return template -> {
-            //1. 使用RequestContextHolder拿到老请求的请求数据
+            //1. 使用RequestContextHolder拿到老请求的请求数据，实质上是从ThreadLocal当中获取的
             ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             if (requestAttributes != null) {
                 HttpServletRequest request = requestAttributes.getRequest();

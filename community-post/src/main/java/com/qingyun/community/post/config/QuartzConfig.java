@@ -1,0 +1,38 @@
+package com.qingyun.community.post.config;
+
+import com.qingyun.community.post.quartz.PostScoreRefreshJob;
+import org.quartz.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+/**
+ * @description：
+ * @author: 張青云
+ * @create: 2021-05-28 22:02
+ **/
+@Configuration
+public class QuartzConfig {
+    private static final String REFRESH_SCORE_IDENTITY = "postScoreRefreshJob";
+    @Bean
+    public JobDetail refreshScoreJobDetail() {
+        // 链式编程,可以携带多个参数,在Job类中声明属性 + setter方法
+        return JobBuilder.newJob(PostScoreRefreshJob.class)
+                .withIdentity(REFRESH_SCORE_IDENTITY)
+                .storeDurably().build();
+    }
+
+    @Bean
+    public Trigger sampleJobTrigger(){
+        // 每隔两秒执行一次
+        SimpleScheduleBuilder scheduleBuilder =
+                SimpleScheduleBuilder
+                        .simpleSchedule()
+                        .withIntervalInSeconds(30)  // 任务执行间隔
+                        .repeatForever();
+        return TriggerBuilder.newTrigger()
+                .forJob(refreshScoreJobDetail())
+                .withIdentity(REFRESH_SCORE_IDENTITY)
+                .withSchedule(scheduleBuilder)
+                .build();
+    }
+}

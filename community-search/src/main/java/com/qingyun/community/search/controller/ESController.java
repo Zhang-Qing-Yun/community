@@ -79,14 +79,14 @@ public class ESController {
     }
 
     @PostMapping("/addPostToES")
-    @LoginRequired
+//    @LoginRequired  // 因为该接口只接受来自特定模块的请求，不会暴露给用户，所以没必要做校验
     @ResponseBody
     public void addPostToES(@RequestBody Post post) {
         esService.addPostToES(post);
     }
 
     @PostMapping("/deletePostFromES")
-    @LoginRequired
+//    @LoginRequired  // 因为该接口只接受来自特定模块的请求，不会暴露给用户，所以没必要做校验
     @ResponseBody
     public void deletePostFromES(Integer id) {
         if (id != null) {

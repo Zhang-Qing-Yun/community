@@ -35,7 +35,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
 
     @Override
-    public Map<String, Object> getPost(Integer current, Integer userId) {
+    public Map<String, Object> getPost(Integer current, Integer userId, Integer orderMode) {
         QueryWrapper<Post> wrapper = new QueryWrapper<>();
         if(current == null || current <= 1) {
             current = 1;
@@ -48,6 +48,12 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }
         //  查询没有被删除的
         wrapper.ne("status", 2);
+        //  按type降序
+        wrapper.orderByDesc("type");
+        //  是否按评分降序
+        if (orderMode == 1) {
+            wrapper.orderByDesc("score");
+        }
         //  按帖子id降序，这样就保证了时间顺序
         wrapper.orderByDesc("id");
         baseMapper.selectPage(page, wrapper);
@@ -121,5 +127,13 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         post.setStatus(status);
         baseMapper.updateById(post);
         return getPostDetail(id);
+    }
+
+    @Override
+    public void updateScore(Integer id, Double score) {
+        Post post = new Post();
+        post.setId(id);
+        post.setScore(score);
+        baseMapper.updateById(post);
     }
 }

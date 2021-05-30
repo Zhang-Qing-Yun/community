@@ -6,9 +6,11 @@ import com.qingyun.community.base.pojo.User;
 import com.qingyun.community.base.utils.Constant;
 import com.qingyun.community.base.utils.HostHolder;
 import com.qingyun.community.base.utils.R;
+import com.qingyun.community.base.utils.RedisKeyUtils;
 import com.qingyun.community.message.component.EventProducer;
 import com.qingyun.community.message.service.LikeService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,6 +34,9 @@ public class LikeController {
 
     @Autowired
     private EventProducer eventProducer;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     @PostMapping("/likeOne")
     @ResponseBody
@@ -61,6 +66,12 @@ public class LikeController {
                     .setEntityUserId(entityUserId)
                     .setData("postId", postId);
             eventProducer.fireEvent(event);
+        }
+
+        // 帖子评分需要更改
+        if (entityType == Constant.ENTITY_TYPE_POST) {
+            String scoreKey = RedisKeyUtils.getPostScoreKey();
+            redisTemplate.opsForSet().add(scoreKey, postId);
         }
 
         return R.ok().data(map);

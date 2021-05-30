@@ -19,9 +19,10 @@ public interface PostService extends IService<Post> {
      * 查询帖子并分页
      * @param current
      * @param userId
+     * @param orderMode 排序方式，如果0是则按type降序，时间降序；如果是1则按type降序，评分降序，时间降序来排
      * @return
      */
-    Map<String, Object> getPost(Integer current, Integer userId);
+    Map<String, Object> getPost(Integer current, Integer userId, Integer orderMode);
 
     /**
      * 发帖
@@ -58,4 +59,11 @@ public interface PostService extends IService<Post> {
      * @return 修改后的帖子
      */
     Post updateStatus(Integer id, Integer status);
+
+    /**
+     * 修改帖子的分数
+     * @param id
+     * @param score
+     */
+    void updateScore(Integer id, Double score);
 }

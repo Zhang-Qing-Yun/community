@@ -14,6 +14,7 @@ public class RedisKeyUtils {
     private static final String PREFIX_FOLLOWER = "follower";
     private static final String PREFIX_UV = "uv";  // 访问量
     private static final String PREFIX_DAU = "dau";  // 活跃用户数量
+    private static final String PREFIX_POST_SCORE = "post:score";  // 得分变化的帖子集合
 
 
     /**
@@ -74,5 +75,10 @@ public class RedisKeyUtils {
     // 区间活跃用户
     public static String getDAUKey(String startDate, String endDate) {
         return PREFIX_DAU + SPLIT + startDate + SPLIT + endDate;
+    }
+
+    // 分数发生变化的帖子集合
+    public static String getPostScoreKey() {
+        return PREFIX_POST_SCORE;
     }
 }

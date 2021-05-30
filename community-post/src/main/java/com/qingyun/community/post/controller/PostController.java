@@ -5,6 +5,7 @@ import com.qingyun.community.base.annotation.LoginRequired;
 import com.qingyun.community.base.exception.CommunityException;
 import com.qingyun.community.base.utils.HostHolder;
 import com.qingyun.community.base.utils.R;
+import com.qingyun.community.base.utils.RedisKeyUtils;
 import com.qingyun.community.post.feignClient.LikeClient;
 import com.qingyun.community.post.feignClient.SearchClient;
 import com.qingyun.community.post.feignClient.UserClient;
@@ -16,6 +17,7 @@ import com.qingyun.community.post.service.CommentService;
 import com.qingyun.community.post.service.PostService;
 import com.qingyun.community.base.utils.Constant;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -55,11 +57,18 @@ public class PostController implements Constant {
     @Autowired
     private SearchClient searchClient;
 
+    @Autowired
+    private RedisTemplate redisTemplate;
+
 
     @GetMapping("/index")
-    public String getIndexPage(Model model, @RequestParam(required = false) Integer current) {
+    public String getIndexPage(Model model, @RequestParam(required = false) Integer current,
+                               @RequestParam(required = false) Integer orderMode) {
+        if (orderMode == null || (orderMode != 0 && orderMode != 1)) {
+            orderMode = 0;
+        }
         //  当前页的全部帖子
-        Map<String, Object> res = postService.getPost(current, null);
+        Map<String, Object> res = postService.getPost(current, null, orderMode);
         List<Post> items = (List<Post>) res.get("items");
 
         //  封装分页对象
@@ -72,7 +81,7 @@ public class PostController implements Constant {
         page.setPages((Long) res.get("pages"));  // 总页数
         page.setTo();
         page.setFrom();
-        page.setPath("/community/post/index");
+        page.setPath("/community/post/index?orderMode="+orderMode);
 
         List<Map<String, Object>> posts = new ArrayList<>();
         if(items != null && items.size() != 0) {
@@ -99,6 +108,7 @@ public class PostController implements Constant {
         }
         model.addAttribute("posts", posts);
         model.addAttribute("page", page);
+        model.addAttribute("orderMode", orderMode);
         return "/index";
     }
 
@@ -127,6 +137,13 @@ public class PostController implements Constant {
         } catch (Exception e) {
             e.printStackTrace();
             throw new CommunityException(20001, "发布失败，请重试！");
+        }
+        //  帖子评分发生变化
+        String scoreKey = RedisKeyUtils.getPostScoreKey();
+        try {
+            redisTemplate.opsForSet().add(scoreKey, post.getId());
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return R.ok().message("发布成功！");
     }
@@ -286,6 +303,13 @@ public class PostController implements Constant {
         } catch (Exception e) {
             e.printStackTrace();
             throw new CommunityException(20001, "操作失败，请重试！");
+        }
+        //  帖子评分发生变化
+        String scoreKey = RedisKeyUtils.getPostScoreKey();
+        try {
+            redisTemplate.opsForSet().add(scoreKey, id);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return R.ok().message("操作成功！");
     }
