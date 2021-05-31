@@ -20,8 +20,11 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+import javax.mail.MessagingException;
 import javax.servlet.http.HttpSession;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,6 +50,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Autowired
     private HostHolder hostHolder;
+
+    @Autowired
+    private ThreadPoolExecutor threadPool;
 
     // 该服务的地址
     @Value("${community.user.path.domain}")
@@ -112,7 +118,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         baseMapper.insert(user);
 
         //  发送激活邮件
-        //  TODO: 发送邮件可以改为异步方式
         Context context = new Context();
         context.setVariable("email", user.getEmail());
         // http://localhost:88/user/activation/{userId}/{activationCode}
@@ -120,12 +125,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         context.setVariable("url",url);
 
         String content = templateEngine.process("/mail/activation", context);
-        try{
-            mailClient.sendMail(user.getEmail(),"激活账号", content);
-        }catch (Exception e){
-            e.printStackTrace();
-            System.out.println("发送邮件异常");
-        }
+        //  异步发送邮件
+        CompletableFuture.runAsync(()->{
+            try {
+                mailClient.sendMail(user.getEmail(),"激活账号", content);
+            } catch (MessagingException e) {
+                e.printStackTrace();
+                System.out.println("发送邮件异常");
+            }
+        }, threadPool);
         return map;
     }
 
