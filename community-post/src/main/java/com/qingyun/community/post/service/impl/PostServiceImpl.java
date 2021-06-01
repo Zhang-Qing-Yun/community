@@ -12,6 +12,7 @@ import com.qingyun.community.post.service.PostService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RLock;
+import org.redisson.api.RReadWriteLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -217,21 +218,58 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
     @Override
     public Post updateType(Integer id, Integer type) {
+        //  待返回的结果
+        Post res = getPostDetail(id);
+        res.setType(type);
+
         Post post = new Post();
         post.setId(id);
         post.setType(type);
         //  失效模式+分布式读写锁来保证缓存一致性
-        baseMapper.updateById(post);
-        return getPostDetail(id);
+        RReadWriteLock lock = redissonClient.getReadWriteLock(RedisKeyUtils.getUpdatePostLock(id));
+        RLock writeLock = lock.writeLock();
+        try {
+            //  加写锁
+            writeLock.lock();
+            //  修改数据库
+            baseMapper.updateById(post);
+            //  删除缓存
+            redisTemplate.delete(RedisKeyUtils.getPostDetail(id));
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            //  解锁
+            writeLock.unlock();
+        }
+        return res;
     }
 
     @Override
     public Post updateStatus(Integer id, Integer status) {
+        //  待返回的结果
+        Post res = getPostDetail(id);
+        res.setStatus(status);
+
         Post post = new Post();
         post.setId(id);
         post.setStatus(status);
-        baseMapper.updateById(post);
-        return getPostDetail(id);
+        //  失效模式+分布式读写锁来保证缓存一致性
+        RReadWriteLock lock = redissonClient.getReadWriteLock(RedisKeyUtils.getUpdatePostLock(id));
+        RLock writeLock = lock.writeLock();
+        try {
+            //  加写锁
+            writeLock.lock();
+            //  修改数据库
+            baseMapper.updateById(post);
+            //  删除缓存
+            redisTemplate.delete(RedisKeyUtils.getPostDetail(id));
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            //  解锁
+            writeLock.unlock();
+        }
+        return res;
     }
 
     @Override

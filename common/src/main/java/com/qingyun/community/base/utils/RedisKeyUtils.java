@@ -19,6 +19,7 @@ public class RedisKeyUtils {
     private static final String PREFIX_POST_INDEX_LOCK = "post:index:lock";  // 热度排行首页的redis互斥锁
     private static final String PREFIX_POST_DETAIL = "post:detail";  // 帖子详情的前缀
     private static final String PREFIX_POST_DETAIL_LOCK = "post:detail:lock";  // 加载帖子详情到缓存时的互斥锁
+    private static final String PREFIX_UPDATE_POST_LOCK = "post:update:lock";  // 修改帖子时加的锁
 
 
     /**
@@ -104,5 +105,10 @@ public class RedisKeyUtils {
     // 加载某个帖子详情到缓存时的互斥锁
     public static String getPostDetailLock(int id) {
         return PREFIX_POST_DETAIL_LOCK + SPLIT + id;
+    }
+
+    // 修改帖子时加的锁
+    public static String getUpdatePostLock(int id) {
+        return PREFIX_UPDATE_POST_LOCK + SPLIT + id;
     }
 }
