@@ -1,20 +1,26 @@
 package com.qingyun.community.post.service.impl;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.qingyun.community.base.component.SensitiveFilter;
+import com.qingyun.community.base.utils.RedisKeyUtils;
 import com.qingyun.community.post.pojo.Post;
 import com.qingyun.community.post.mapper.PostMapper;
 import com.qingyun.community.post.service.PostService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.HtmlUtils;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -29,20 +35,40 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     @Value("${page.size}")
     private int PAGE_SIZE;
 
+    @Value("${cache.post.ttl}")
+    private int POST_TTL;
+
+    @Value("${flush-post-score-time}")
+    private int FLUSH_SCORE_TIME;
+
     @Autowired
     private SensitiveFilter sensitiveFilter;
 
+    @Autowired
+    private RedisTemplate redisTemplate;
 
 
-    @Override
-    public Map<String, Object> getPost(Integer current, Integer userId, Integer orderMode) {
-        QueryWrapper<Post> wrapper = new QueryWrapper<>();
-        if(current == null || current <= 1) {
-            current = 1;
+    public List<Post> getPost(Integer current, Integer userId, Integer orderMode){
+        //  按时间排序直接查数据库，因为是实时的数据
+        //  某人的发帖列表直接查数据库
+        if (orderMode == 0 || userId != null) {
+            return getPostFromDB(current, userId, orderMode);
         }
-        Page<Post> page = new Page<>(current, PAGE_SIZE);
-        Map<String, Object> map = new HashMap<>();
+        String redisKey = RedisKeyUtils.getPostIndex(current);
+        String mapJson = (String) redisTemplate.opsForValue().get(redisKey);
+        //  缓存里没有，去查数据库并放到缓存里
+        if (StringUtils.isEmpty(mapJson)) {
+            List<Post> map = getPostFromDB(current, userId, orderMode);
+            redisTemplate.opsForValue().set(redisKey, JSON.toJSONString(map), FLUSH_SCORE_TIME, TimeUnit.MINUTES);
+            return map;
+        }
+        return JSON.parseObject(mapJson, new TypeReference<List<Post>>(){});
+    }
 
+    //  从数据库查询列表
+    private List<Post> getPostFromDB(Integer current, Integer userId, Integer orderMode) {
+        QueryWrapper<Post> wrapper = new QueryWrapper<>();
+        Page<Post> page = new Page<Post>(current, PAGE_SIZE).setOptimizeCountSql(false);
         if(userId != null) {
             wrapper.eq("user_id", userId);
         }
@@ -57,28 +83,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         //  按帖子id降序，这样就保证了时间顺序
         wrapper.orderByDesc("id");
         baseMapper.selectPage(page, wrapper);
-        //  该页的记录
-        List<Post> items = page.getRecords();
-        //  总页数
-        long pages = page.getPages();
-        //  每页记录数
-        long size = page.getSize();
-        //  总记录数
-        long total = page.getTotal();
-        //  是否有下一页
-        boolean hasNext = page.hasNext();
-        //  是否有上一页
-        boolean hasPrevious = page.hasPrevious();
-
-
-        map.put("items", items);
-        map.put("current", current);
-        map.put("pages", pages);
-        map.put("pageSize", size);
-        map.put("total", total);
-        map.put("hasNext", hasNext);
-        map.put("hasPrevious", hasPrevious);
-        return map;
+        return page.getRecords();
     }
 
     @Override
@@ -101,6 +106,13 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     public Post getPostDetail(Integer id) {
         Post post = baseMapper.selectById(id);
         return post;
+    }
+
+    @Override
+    public Integer getTotalPost() {
+        QueryWrapper<Post> wrapper = new QueryWrapper<>();
+        wrapper.ne("status", 2);
+        return baseMapper.selectCount(wrapper);
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.qingyun.community.post.service;
 import com.qingyun.community.post.pojo.Post;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -22,7 +23,7 @@ public interface PostService extends IService<Post> {
      * @param orderMode 排序方式，如果0是则按type降序，时间降序；如果是1则按type降序，评分降序，时间降序来排
      * @return
      */
-    Map<String, Object> getPost(Integer current, Integer userId, Integer orderMode);
+    List<Post> getPost(Integer current, Integer userId, Integer orderMode);
 
     /**
      * 发帖
@@ -36,6 +37,12 @@ public interface PostService extends IService<Post> {
      * @return
      */
     Post getPostDetail(Integer id);
+
+    /**
+     * 一共有多少帖子
+     * @return
+     */
+    Integer getTotalPost();
 
     /**
      * 更新帖子的数量

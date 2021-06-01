@@ -15,6 +15,7 @@ public class RedisKeyUtils {
     private static final String PREFIX_UV = "uv";  // 访问量
     private static final String PREFIX_DAU = "dau";  // 活跃用户数量
     private static final String PREFIX_POST_SCORE = "post:score";  // 得分变化的帖子集合
+    private static final String PREFIX_POST_INDEX = "post:index";  // 按热度排行的首页前缀
 
 
     /**
@@ -80,5 +81,9 @@ public class RedisKeyUtils {
     // 分数发生变化的帖子集合
     public static String getPostScoreKey() {
         return PREFIX_POST_SCORE;
+    }
+
+    public static String getPostIndex(int current) {
+        return PREFIX_POST_INDEX + SPLIT + current;
     }
 }

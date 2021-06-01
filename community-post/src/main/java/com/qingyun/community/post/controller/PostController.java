@@ -17,6 +17,7 @@ import com.qingyun.community.post.service.CommentService;
 import com.qingyun.community.post.service.PostService;
 import com.qingyun.community.base.utils.Constant;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +39,8 @@ import java.util.*;
 @Controller
 @RequestMapping("/community/post")
 public class PostController implements Constant {
+    @Value("${page.size}")
+    private int PAGE_SIZE;
 
     @Autowired
     private PostService postService;
@@ -64,21 +67,23 @@ public class PostController implements Constant {
     @GetMapping("/index")
     public String getIndexPage(Model model, @RequestParam(required = false) Integer current,
                                @RequestParam(required = false) Integer orderMode) {
+        if(current == null || current <= 1) {
+            current = 1;
+        }
         if (orderMode == null || (orderMode != 0 && orderMode != 1)) {
             orderMode = 0;
         }
         //  当前页的全部帖子
-        Map<String, Object> res = postService.getPost(current, null, orderMode);
-        List<Post> items = (List<Post>) res.get("items");
+        List<Post> items = postService.getPost(current, null, orderMode);
 
         //  封装分页对象
         Page page = new Page();
-        page.setCurrent((Integer) res.get("current"));
-        page.setHasNext((Boolean) res.get("hasNext"));
-        page.setHasPrevious((Boolean) res.get("hasPrevious"));
-        page.setTotal((Long) res.get("total"));
-        page.setSize((Long) res.get("pageSize"));  // 每页记录数
-        page.setPages((Long) res.get("pages"));  // 总页数
+        page.setCurrent(current);
+        int total = postService.getTotalPost();
+        int pages = total%PAGE_SIZE == 0 ? total/PAGE_SIZE : total/PAGE_SIZE+1;
+        page.setTotal(total);
+        page.setSize(PAGE_SIZE);  // 每页记录数
+        page.setPages(pages);  // 总页数
         page.setTo();
         page.setFrom();
         page.setPath("/community/post/index?orderMode="+orderMode);
