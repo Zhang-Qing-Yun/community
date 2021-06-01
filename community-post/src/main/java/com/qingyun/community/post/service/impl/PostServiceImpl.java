@@ -14,12 +14,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.HtmlUtils;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -48,6 +47,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     private RedisTemplate redisTemplate;
 
 
+    @Override
     public List<Post> getPost(Integer current, Integer userId, Integer orderMode){
         //  按时间排序直接查数据库，因为是实时的数据
         //  某人的发帖列表直接查数据库
@@ -58,14 +58,18 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         String mapJson = (String) redisTemplate.opsForValue().get(redisKey);
         //  缓存里没有，去查数据库并放到缓存里
         if (StringUtils.isEmpty(mapJson)) {
-            List<Post> map = getPostFromDB(current, userId, orderMode);
-            redisTemplate.opsForValue().set(redisKey, JSON.toJSONString(map), FLUSH_SCORE_TIME, TimeUnit.MINUTES);
-            return map;
+            return getPostWithLock(current, userId, orderMode);
         }
         return JSON.parseObject(mapJson, new TypeReference<List<Post>>(){});
     }
 
-    //  从数据库查询列表
+    /**
+     * 从数据库查询列表
+     * @param current
+     * @param userId
+     * @param orderMode
+     * @return
+     */
     private List<Post> getPostFromDB(Integer current, Integer userId, Integer orderMode) {
         QueryWrapper<Post> wrapper = new QueryWrapper<>();
         Page<Post> page = new Page<Post>(current, PAGE_SIZE).setOptimizeCountSql(false);
@@ -84,6 +88,46 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         wrapper.orderByDesc("id");
         baseMapper.selectPage(page, wrapper);
         return page.getRecords();
+    }
+
+    /**
+     * 手写基于redis的分布式互斥锁，解决缓存击穿和缓存雪崩
+     * @param current
+     * @param userId
+     * @param orderMode
+     * @return
+     */
+    private List<Post> getPostWithLock(Integer current, Integer userId, Integer orderMode) {
+        //  设置uuid，防止发生锁误删
+        String uuid = UUID.randomUUID().toString();
+        //  此处过期时间需要设置的长一点，必须大于业务的执行时间，否则业务还在执行时锁过期
+        Boolean success = redisTemplate.opsForValue().setIfAbsent(RedisKeyUtils.getPostIndexLock(current), uuid, 10, TimeUnit.SECONDS);
+        if (success) {  // 加锁成功
+            try {
+                List<Post> list = getPostFromDB(current, userId, orderMode);
+                String redisKey = RedisKeyUtils.getPostIndex(current);
+                //  加锁保证原子性
+                redisTemplate.opsForValue().set(redisKey, JSON.toJSONString(list), FLUSH_SCORE_TIME, TimeUnit.MINUTES);
+                return list;
+            } finally {  // 解锁
+                //  使用Lua脚本保证解锁的原子性
+                String script = "if redis.call(\"get\",KEYS[1]) == ARGV[1] then\n" +
+                        "    return redis.call(\"del\",KEYS[1])\n" +
+                        "else\n" +
+                        "    return 0\n" +
+                        "end";
+                redisTemplate.execute(new DefaultRedisScript(script, Long.class),
+                        Arrays.asList(RedisKeyUtils.getPostIndexLock(current)), uuid);
+            }
+        } else {
+            //  加锁不成功则采用自旋的方式
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return getPost(current, userId, orderMode);
+        }
     }
 
     @Override

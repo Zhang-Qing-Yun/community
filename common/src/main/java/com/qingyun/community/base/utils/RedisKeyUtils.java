@@ -16,6 +16,7 @@ public class RedisKeyUtils {
     private static final String PREFIX_DAU = "dau";  // 活跃用户数量
     private static final String PREFIX_POST_SCORE = "post:score";  // 得分变化的帖子集合
     private static final String PREFIX_POST_INDEX = "post:index";  // 按热度排行的首页前缀
+    private static final String PREFIX_POST_INDEX_LOCK = "post:index:lock";  // 热度排行首页的redis互斥锁
 
 
     /**
@@ -85,5 +86,9 @@ public class RedisKeyUtils {
 
     public static String getPostIndex(int current) {
         return PREFIX_POST_INDEX + SPLIT + current;
+    }
+
+    public static String getPostIndexLock(int current) {
+        return PREFIX_POST_INDEX_LOCK + SPLIT + current;
     }
 }
