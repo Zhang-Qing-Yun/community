@@ -17,6 +17,8 @@ public class RedisKeyUtils {
     private static final String PREFIX_POST_SCORE = "post:score";  // 得分变化的帖子集合
     private static final String PREFIX_POST_INDEX = "post:index";  // 按热度排行的首页前缀
     private static final String PREFIX_POST_INDEX_LOCK = "post:index:lock";  // 热度排行首页的redis互斥锁
+    private static final String PREFIX_POST_DETAIL = "post:detail";  // 帖子详情的前缀
+    private static final String PREFIX_POST_DETAIL_LOCK = "post:detail:lock";  // 加载帖子详情到缓存时的互斥锁
 
 
     /**
@@ -84,11 +86,23 @@ public class RedisKeyUtils {
         return PREFIX_POST_SCORE;
     }
 
+    // 按热度排行的首页帖子列表
     public static String getPostIndex(int current) {
         return PREFIX_POST_INDEX + SPLIT + current;
     }
 
+    // 加载按热度排行的首页帖子列表到缓存中使用的分布式锁
     public static String getPostIndexLock(int current) {
         return PREFIX_POST_INDEX_LOCK + SPLIT + current;
+    }
+
+    // 某个帖子的详情
+    public static String getPostDetail(int id) {
+        return PREFIX_POST_DETAIL + SPLIT + id;
+    }
+
+    // 加载某个帖子详情到缓存时的互斥锁
+    public static String getPostDetailLock(int id) {
+        return PREFIX_POST_DETAIL_LOCK + SPLIT + id;
     }
 }

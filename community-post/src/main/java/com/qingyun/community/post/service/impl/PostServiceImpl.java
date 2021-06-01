@@ -11,6 +11,8 @@ import com.qingyun.community.post.mapper.PostMapper;
 import com.qingyun.community.post.service.PostService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.commons.lang3.StringUtils;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -46,6 +48,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     @Autowired
     private RedisTemplate redisTemplate;
 
+    @Autowired
+    private RedissonClient redissonClient;
+
 
     @Override
     public List<Post> getPost(Integer current, Integer userId, Integer orderMode){
@@ -55,12 +60,12 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             return getPostFromDB(current, userId, orderMode);
         }
         String redisKey = RedisKeyUtils.getPostIndex(current);
-        String mapJson = (String) redisTemplate.opsForValue().get(redisKey);
+        String json = (String) redisTemplate.opsForValue().get(redisKey);
         //  缓存里没有，去查数据库并放到缓存里
-        if (StringUtils.isEmpty(mapJson)) {
+        if (StringUtils.isEmpty(json)) {
             return getPostWithLock(current, userId, orderMode);
         }
-        return JSON.parseObject(mapJson, new TypeReference<List<Post>>(){});
+        return JSON.parseObject(json, new TypeReference<List<Post>>(){});
     }
 
     /**
@@ -101,12 +106,13 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         //  设置uuid，防止发生锁误删
         String uuid = UUID.randomUUID().toString();
         //  此处过期时间需要设置的长一点，必须大于业务的执行时间，否则业务还在执行时锁过期
+        //  加锁时保证原子性
         Boolean success = redisTemplate.opsForValue().setIfAbsent(RedisKeyUtils.getPostIndexLock(current), uuid, 10, TimeUnit.SECONDS);
         if (success) {  // 加锁成功
             try {
                 List<Post> list = getPostFromDB(current, userId, orderMode);
                 String redisKey = RedisKeyUtils.getPostIndex(current);
-                //  加锁保证原子性
+                //  添加到缓存
                 redisTemplate.opsForValue().set(redisKey, JSON.toJSONString(list), FLUSH_SCORE_TIME, TimeUnit.MINUTES);
                 return list;
             } finally {  // 解锁
@@ -148,8 +154,50 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
     @Override
     public Post getPostDetail(Integer id) {
-        Post post = baseMapper.selectById(id);
-        return post;
+        //  先查缓存
+        String redisKey = RedisKeyUtils.getPostDetail(id);
+        String json = (String) redisTemplate.opsForValue().get(redisKey);
+        //  缓存里没有，去查数据库并放到缓存里
+        if (StringUtils.isEmpty(json)) {
+            return getPostDetailWithLock(id);
+        }
+        return JSON.parseObject(json, Post.class);
+    }
+
+    /**
+     * 使用Redisson提供的分布式锁来解决加载帖子详情到缓存中时的缓存雪崩和缓存击穿
+     * @param id 帖子id
+     * @return 帖子详情
+     */
+    private Post getPostDetailWithLock(Integer id) {
+        //  获取锁
+        //  Redisson锁有三个优点：1.不会出现误删锁；2.锁有过期时间，不会出现死锁；3.锁自动续期，不会出现业务超时。
+        RLock lock = redissonClient.getLock(RedisKeyUtils.getPostDetailLock(id));
+        //  加锁
+        boolean lockSuccess = false;
+        try {
+            lockSuccess = lock.tryLock(100, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        if (lockSuccess) {
+            try {
+                //  查数据库
+                Post post = baseMapper.selectById(id);
+                //  随机化过期时间（单位为秒），解决缓存雪崩问题
+                int ttl = new Random().nextInt(60) + POST_TTL*60;
+                //  添加到缓存里
+                redisTemplate.opsForValue().set(RedisKeyUtils.getPostDetail(id), JSON.toJSONString(post),
+                        ttl, TimeUnit.SECONDS);
+                return post;
+            } finally {
+                //  解锁
+                lock.unlock();
+            }
+        } else {
+            //  获取不到锁时自旋
+            return getPostDetail(id);
+        }
     }
 
     @Override
@@ -172,6 +220,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         Post post = new Post();
         post.setId(id);
         post.setType(type);
+        //  失效模式+分布式读写锁来保证缓存一致性
         baseMapper.updateById(post);
         return getPostDetail(id);
     }
