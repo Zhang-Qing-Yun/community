@@ -22,6 +22,7 @@ public class LoginUserInterceptor implements HandlerInterceptor {
     @Autowired
     private HostHolder threadLocal;
 
+    //  在Controller之前执行
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         //  查询是否登陆过
@@ -34,14 +35,16 @@ public class LoginUserInterceptor implements HandlerInterceptor {
         return true;
     }
 
+    //  在Controller之后执行
     @Override
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
         User user = threadLocal.get();
-        if (user!=null&& modelAndView!=null){
-            modelAndView.addObject("loginUser",user);
+        if (user != null && modelAndView!=null){
+            modelAndView.addObject("loginUser", user);
         }
     }
 
+    //  在模板解析完之后执行
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
         threadLocal.remove();

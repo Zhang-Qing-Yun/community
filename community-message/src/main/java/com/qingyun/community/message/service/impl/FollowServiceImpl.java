@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 /**
- * @description：处理关注业务，使用Redis来存储关注数据，选用zset数据结构
+ * @description： 处理关注业务，使用Redis来存储关注数据，选用zset数据结构
  * @author: 張青云
  * @create: 2021-05-12 13:53
  **/
@@ -34,11 +34,11 @@ public class FollowServiceImpl implements FollowService, Constant {
             public Object execute(RedisOperations operations) throws DataAccessException {
                 String followeeKey = RedisKeyUtils.getFolloweeKey(userId, entityType);
                 String followerKey = RedisKeyUtils.getFollowerKey(entityType, entityId);
+                long now = System.currentTimeMillis();
 
                 operations.multi();
-
-                operations.opsForZSet().add(followeeKey, entityId, System.currentTimeMillis());
-                operations.opsForZSet().add(followerKey, userId, System.currentTimeMillis());
+                operations.opsForZSet().add(followeeKey, entityId, now);
+                operations.opsForZSet().add(followerKey, userId, now);
 
                 return operations.exec();
             }

@@ -135,7 +135,7 @@ public class UserController implements Constant,com.qingyun.community.base.utils
     }
 
     /**
-     *  生成验证码，因为接下来需要验证，所以需要将验证码保存起来，这里存到了session
+     *  生成验证码，因为接下来需要验证，所以需要将验证码保存起来，这里存到了redis
      */
     @GetMapping(path = "/kaptcha")
     public void getKaptcha(HttpServletResponse response){
@@ -154,10 +154,10 @@ public class UserController implements Constant,com.qingyun.community.base.utils
         response.addCookie(cookie);
 
 
-        //to browser
+        //  返回给浏览器
         response.setContentType("image/png");
         try {
-            OutputStream os =response.getOutputStream();
+            OutputStream os = response.getOutputStream();
             ImageIO.write(image,"png", os);
         } catch (IOException e) {
             e.printStackTrace();
@@ -171,7 +171,7 @@ public class UserController implements Constant,com.qingyun.community.base.utils
                         Model model, HttpSession session, HttpServletResponse response,
                         @CookieValue("kaptchaOwner") String kaptchaOwner) {
         // 检查验证码
-        String kaptcha =null;
+        String kaptcha = null;
         if (StringUtils.isNotBlank(kaptchaOwner)){
             String redisKey = RedisKeyUtils.getKaptchaKey(kaptchaOwner);
             kaptcha = (String) redisTemplate.opsForValue().get(redisKey);

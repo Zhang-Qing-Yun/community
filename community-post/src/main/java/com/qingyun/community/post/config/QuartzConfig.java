@@ -29,6 +29,8 @@ public class QuartzConfig {
 
     @Bean
     public Trigger sampleJobTrigger(){
+        //  TODO: 可以考虑使用定时任务来将热帖预热到缓存里
+        //  TODO：可以考虑使用延时队列来将点赞数发生变化的持久化到数据库里
         // 每隔两秒执行一次
         SimpleScheduleBuilder scheduleBuilder =
                 SimpleScheduleBuilder

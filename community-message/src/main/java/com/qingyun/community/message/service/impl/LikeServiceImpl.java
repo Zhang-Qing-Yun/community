@@ -13,7 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @description：使用redis来保存点赞业务，选用set数据结构，key是like:entity:entityType:entityId，value值里的内容是对该entity点过赞的userId
+ * @description： 使用redis来保存点赞业务，选用set数据结构，
+ * key是like:entity:entityType:entityId，value值里的内容是对该entity点过赞的userId
  * @author: 張青云
  * @create: 2021-05-11 12:10
  **/
@@ -30,10 +31,10 @@ public class LikeServiceImpl implements LikeService {
         redisTemplate.execute(new SessionCallback() {
             @Override
             public Object execute(RedisOperations operations) throws DataAccessException {
-                String entityLikeKey = RedisKeyUtils.getEntityLikeKey(entityType,entityId);
+                String entityLikeKey = RedisKeyUtils.getEntityLikeKey(entityType, entityId);
                 String userLikeKey = RedisKeyUtils.getUserLikeKey(entityUserId);
 
-                boolean isMember = operations.opsForSet().isMember(entityLikeKey,userId);
+                boolean isMember = operations.opsForSet().isMember(entityLikeKey, userId);
 
                 operations.multi();  // 开启事务
                 if (isMember){

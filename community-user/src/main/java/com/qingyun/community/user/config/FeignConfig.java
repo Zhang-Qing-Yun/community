@@ -10,7 +10,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * @description：在真正进行远程调用之前加一个拦截器，将老请求里的cookie放到新创建的请求里
+ * @description： 在真正进行远程调用之前加一个拦截器，将老请求里的cookie放到新创建的请求里
  * @author: 張青云
  * @create: 2021-05-23 09:19
  **/

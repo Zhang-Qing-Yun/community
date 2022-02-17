@@ -79,8 +79,6 @@ public class CommentController {
         }
         messageClient.addEventToMq(event);
 
-
-
         //  TODO: 重定向路径写死为localhost了
         return "redirect:http://localhost:88/community/post/postDetail/" + postId;
     }

@@ -38,7 +38,7 @@ public class RedisKeyUtils {
      * @return
      */
     public static String getEntityLikeKey(int entityType, int EntityId){
-        return PREFIX_ENTITY_LIKE+SPLIT+entityType+SPLIT+EntityId;
+        return PREFIX_ENTITY_LIKE + SPLIT + entityType + SPLIT + EntityId;
     }
 
     /**

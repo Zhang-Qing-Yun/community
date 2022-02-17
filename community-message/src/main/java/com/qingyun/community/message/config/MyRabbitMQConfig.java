@@ -25,7 +25,6 @@ public class MyRabbitMQConfig {
 
     /**
      * 交给spring管理后，rabbitmq没有的话就会自动创建，有的话即使是属性发生了变化也不会覆盖掉
-     * @return
      */
     @Bean
     //  普通队列，评论事件

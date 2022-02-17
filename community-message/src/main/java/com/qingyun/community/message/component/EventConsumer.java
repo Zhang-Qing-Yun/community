@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @description：消息队列的消费者
+ * @description： 消息队列的消费者
  * @author: 張青云
  * @create: 2021-05-19 13:52
  **/

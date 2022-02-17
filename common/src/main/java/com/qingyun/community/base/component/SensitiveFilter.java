@@ -41,8 +41,6 @@ public class SensitiveFilter {
             }
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-
         }
     }
 

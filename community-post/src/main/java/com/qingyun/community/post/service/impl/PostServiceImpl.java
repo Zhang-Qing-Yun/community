@@ -61,6 +61,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             return getPostFromDB(current, userId, orderMode);
         }
         String redisKey = RedisKeyUtils.getPostIndex(current);
+        //  TODO：查热帖的时候可以一条一条的去redis里查，不必将整个页面数据缓存
         String json = (String) redisTemplate.opsForValue().get(redisKey);
         //  缓存里没有，去查数据库并放到缓存里
         if (StringUtils.isEmpty(json)) {
@@ -245,6 +246,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     }
 
     @Override
+    //  TODO: 这里还有一个bug，更新具体帖子后，首页列表还是在缓存里并没有去修改，所以加精后并不能在首页看到具体的显示
     public Post updateStatus(Integer id, Integer status) {
         //  待返回的结果
         Post res = getPostDetail(id);
