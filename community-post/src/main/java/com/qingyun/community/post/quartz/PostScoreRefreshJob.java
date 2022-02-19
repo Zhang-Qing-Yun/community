@@ -17,7 +17,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 
 /**
- * @description：更新帖子分数
+ * @description： 更新帖子分数
  * @author: 張青云
  * @create: 2021-05-28 21:39
  **/

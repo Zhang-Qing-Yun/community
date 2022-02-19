@@ -55,27 +55,24 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
     @Override
     public List<Post> getPost(Integer current, Integer userId, Integer orderMode){
-        //  按时间排序直接查数据库，因为是实时的数据
-        //  某人的发帖列表直接查数据库
-        if (orderMode == 0 || userId != null) {
-            return getPostFromDB(current, userId, orderMode);
-        }
-        String redisKey = RedisKeyUtils.getPostIndex(current);
-        //  TODO：查热帖的时候可以一条一条的去redis里查，不必将整个页面数据缓存
-        String json = (String) redisTemplate.opsForValue().get(redisKey);
-        //  缓存里没有，去查数据库并放到缓存里
-        if (StringUtils.isEmpty(json)) {
-            return getPostWithLock(current, userId, orderMode);
-        }
-        return JSON.parseObject(json, new TypeReference<List<Post>>(){});
+//        //  按时间排序直接查数据库，因为是实时的数据
+//        //  某人的发帖列表直接查数据库
+//        if (orderMode == 0 || userId != null) {
+//            return getPostFromDB(current, userId, orderMode);
+//        }
+//        String redisKey = RedisKeyUtils.getPostIndex(current);
+//        String json = (String) redisTemplate.opsForValue().get(redisKey);
+//        //  缓存里没有，去查数据库并放到缓存里
+//        if (StringUtils.isEmpty(json)) {
+//            return getPostWithLock(current, userId, orderMode);
+//        }
+//        return JSON.parseObject(json, new TypeReference<List<Post>>(){});
+
+        return getPostFromDB(current, userId, orderMode);
     }
 
     /**
      * 从数据库查询列表
-     * @param current
-     * @param userId
-     * @param orderMode
-     * @return
      */
     private List<Post> getPostFromDB(Integer current, Integer userId, Integer orderMode) {
         QueryWrapper<Post> wrapper = new QueryWrapper<>();
@@ -99,10 +96,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
     /**
      * 手写基于redis的分布式互斥锁，解决缓存击穿和缓存雪崩
-     * @param current
-     * @param userId
-     * @param orderMode
-     * @return
+     * 缓存整个页面存在问题，故废弃该方法
      */
     private List<Post> getPostWithLock(Integer current, Integer userId, Integer orderMode) {
         //  设置uuid，防止发生锁误删
@@ -161,7 +155,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         String json = (String) redisTemplate.opsForValue().get(redisKey);
         //  缓存里没有，去查数据库并放到缓存里
         if (StringUtils.isEmpty(json)) {
-            return getPostDetailWithLock(id);
+            return getPostDetailWithSelfLock(id);
         }
         return JSON.parseObject(json, Post.class);
     }
@@ -202,6 +196,48 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }
     }
 
+    /**
+     * 手写基于redis的分布式互斥锁，解决加载帖子详情到缓存中时的缓存雪崩和缓存击穿
+     * @param id 帖子id
+     * @return 帖子详情
+     */
+    private Post getPostDetailWithSelfLock(Integer id) {
+        //  设置uuid，防止发生锁误删
+        String uuid = UUID.randomUUID().toString();
+        //  此处过期时间需要设置的长一点，必须大于业务的执行时间，否则业务还在执行时锁过期
+        //  加锁时保证原子性
+        Boolean success = redisTemplate.opsForValue().setIfAbsent(RedisKeyUtils.getPostDetailLock(id), uuid, 10, TimeUnit.SECONDS);
+        if (success) {  // 加锁成功
+            try {
+                //  查数据库
+                Post post = baseMapper.selectById(id);
+                //  随机化过期时间（单位为秒），解决缓存雪崩问题
+                int ttl = new Random().nextInt(60) + POST_TTL*60;
+                //  添加到缓存里
+                redisTemplate.opsForValue().set(RedisKeyUtils.getPostDetail(id), JSON.toJSONString(post),
+                        ttl, TimeUnit.SECONDS);
+                return post;
+            } finally {  // 解锁
+                //  使用Lua脚本保证解锁的原子性
+                String script = "if redis.call(\"get\",KEYS[1]) == ARGV[1] then\n" +
+                        "    return redis.call(\"del\",KEYS[1])\n" +
+                        "else\n" +
+                        "    return 0\n" +
+                        "end";
+                redisTemplate.execute(new DefaultRedisScript(script, Long.class),
+                        Arrays.asList(RedisKeyUtils.getPostDetailLock(id)), uuid);
+            }
+        } else {
+            //  加锁不成功则采用自旋的方式
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return getPostDetail(id);
+        }
+    }
+
     @Override
     public Integer getTotalPost() {
         QueryWrapper<Post> wrapper = new QueryWrapper<>();
@@ -226,27 +262,12 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         Post post = new Post();
         post.setId(id);
         post.setType(type);
-        //  失效模式+分布式读写锁来保证缓存一致性
-        RReadWriteLock lock = redissonClient.getReadWriteLock(RedisKeyUtils.getUpdatePostLock(id));
-        RLock writeLock = lock.writeLock();
-        try {
-            //  加写锁
-            writeLock.lock();
-            //  修改数据库
-            baseMapper.updateById(post);
-            //  删除缓存
-            redisTemplate.delete(RedisKeyUtils.getPostDetail(id));
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            //  解锁
-            writeLock.unlock();
-        }
+        //  保证缓存一致性
+        doubleDeleteCache(id, post);
         return res;
     }
 
     @Override
-    //  TODO: 这里还有一个bug，更新具体帖子后，首页列表还是在缓存里并没有去修改，所以加精后并不能在首页看到具体的显示
     public Post updateStatus(Integer id, Integer status) {
         //  待返回的结果
         Post res = getPostDetail(id);
@@ -255,23 +276,26 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         Post post = new Post();
         post.setId(id);
         post.setStatus(status);
-        //  失效模式+分布式读写锁来保证缓存一致性
-        RReadWriteLock lock = redissonClient.getReadWriteLock(RedisKeyUtils.getUpdatePostLock(id));
-        RLock writeLock = lock.writeLock();
-        try {
-            //  加写锁
-            writeLock.lock();
-            //  修改数据库
-            baseMapper.updateById(post);
-            //  删除缓存
-            redisTemplate.delete(RedisKeyUtils.getPostDetail(id));
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            //  解锁
-            writeLock.unlock();
-        }
+        //  保证缓存一致性
+        doubleDeleteCache(id, post);
         return res;
+    }
+
+    /**
+     * 使用先删缓存再更新数据库的延时双删策略来保证缓存一致性
+     * @param id 要从缓存中删除的帖子的id
+     * @param post 修改后的帖子，id属性不能为空
+     */
+    private void doubleDeleteCache(Integer id, Post post) {
+        //  使用先删缓存再更新数据库的延时双删策略来保证缓存一致性
+        redisTemplate.delete(RedisKeyUtils.getPostDetail(id));  // 删除缓存
+        baseMapper.updateById(post);  // 修改数据库
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        redisTemplate.delete(RedisKeyUtils.getPostDetail(id));  // 延时后再次删除缓存
     }
 
     @Override
